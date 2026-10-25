@@ -1,0 +1,3735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>浙教版数学 · 九年级上册 · 动态探究</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background:#f1f5f9; color:#1e293b; -webkit-font-smoothing:antialiased;
+    overscroll-behavior:none;
+  }
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ============ 主界面 ============ */
+  #screen-home.active{display:block;min-height:100vh;}
+  .home{max-width:1180px;margin:0 auto;padding:48px 28px 60px;}
+  .home-head h1{font-size:clamp(20px,2.6vw,30px);margin:0 0 8px;letter-spacing:.5px;}
+  .home-head p{margin:0 0 32px;color:#64748b;font-size:15px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:22px;}
+  .card{
+    background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;
+    cursor:pointer;transition:.22s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 16px 32px -12px rgba(37,99,235,.28);border-color:#bfdbfe;}
+  .card.disabled{opacity:.72;cursor:default;}
+  .card.disabled:hover{transform:none;box-shadow:none;border-color:#e2e8f0;}
+  .thumb{height:132px;background:linear-gradient(140deg,#f8fafc,#eef2ff);display:flex;align-items:center;justify-content:center;}
+  .thumb svg{width:150px;height:100px;}
+  .card-body{padding:14px 16px 16px;}
+  .card-body h3{margin:0 0 6px;font-size:16px;}
+  .card-body p{margin:0 0 10px;font-size:13px;line-height:1.6;color:#64748b;}
+  .badge{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-weight:600;}
+  .badge.soon{background:#f1f5f9;color:#94a3b8;}
+  .home-foot{margin-top:44px;text-align:center;color:#94a3b8;font-size:12.5px;}
+
+  /* ============ 演示页通用 ============ */
+  .screen.demo.active{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+  .topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:#fff;border-bottom:1px solid #e2e8f0;flex-shrink:0;flex-wrap:wrap;}
+  .topbar h2{margin:0;font-size:17px;}
+  .back{border:1px solid #e2e8f0;background:#fff;border-radius:9px;padding:7px 14px;font-size:14px;cursor:pointer;color:#334155;transition:.15s;}
+  .back:hover{background:#f1f5f9;}
+  .spacer{flex:1;}
+  .topbar label.setting{display:flex;align-items:center;gap:6px;font-size:14px;color:#475569;cursor:pointer;user-select:none;}
+  .topbar label.setting input{width:16px;height:16px;accent-color:#2563eb;}
+
+  .body{flex:1;display:flex;min-height:0;}
+  .panel{width:340px;flex-shrink:0;background:#fff;border-right:1px solid #e2e8f0;padding:18px;overflow-y:auto;}
+  .tabs{display:flex;gap:6px;background:#f1f5f9;padding:4px;border-radius:11px;margin-bottom:16px;}
+  .tab{flex:1;border:0;background:transparent;padding:9px 0;border-radius:8px;font-size:14px;color:#64748b;cursor:pointer;font-weight:600;transition:.18s;}
+  .tab.active{background:#fff;color:#2563eb;box-shadow:0 1px 4px rgba(15,23,42,.1);}
+  .pane{display:none;}
+  .pane.active{display:block;}
+  .formula{font-family:"Cambria Math",Georgia,serif;font-size:17px;color:#0f172a;text-align:center;margin-bottom:14px;letter-spacing:.4px;}
+  .inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .inputs label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:#64748b;font-weight:600;}
+  .inputs input{width:100%;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:15px;outline:none;transition:.16s;font-family:inherit;color:#0f172a;}
+  .inputs input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+  .tip{font-size:12.5px;color:#94a3b8;margin:12px 0 0;line-height:1.6;}
+  .gen{width:100%;margin-top:14px;padding:12px;border:0;border-radius:11px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:.18s;}
+  .gen:hover{filter:brightness(1.06);}
+  .gen:active{transform:scale(.985);}
+  .gen.secondary{background:#e2e8f0;color:#334155;}
+  .gen.secondary:hover{filter:brightness(.98);}
+  .gen.warn{background:linear-gradient(135deg,#f59e0b,#d97706);}
+  .err{margin-top:12px;color:#dc2626;font-size:13px;line-height:1.75;}
+  .info{margin-top:16px;border-top:1px dashed #e2e8f0;padding-top:12px;}
+  .info-row{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:7px 8px;border-radius:8px;align-items: center;}
+  .info-row > span { color: #64748b; flex-shrink: 0; }
+  .info-row b{font-weight:600;text-align:right;color:#0f172a;word-break:break-word;display: flex;flex-wrap: wrap;justify-content: flex-end;align-items: center;gap: 4px;}
+  .info-row.hl{background:#fffbeb;}
+  .info-row.hl b{color:#b45309;}
+  .info-row.hl-red{background:#fef2f2;}
+  .info-row.hl-red b{color:#dc2626;}
+  .info-row.hl-blue{background:#eff6ff;}
+  .info-row.hl-blue b{color:#1d4ed8;}
+  .info-row.equal-highlight { background: #dcfce7; } .info-row.equal-highlight b { color: #16a34a; }
+  
+  .canvas-wrap{flex:1;min-width:0;position:relative;background:#fff;touch-action:none;overflow:hidden;}
+  canvas.demo-cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:default;}
+  #canvas-html-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+
+  .subtabs{display:flex;gap:6px;margin-bottom:12px;}
+  .subtab{flex:1;border:1.5px solid #e2e8f0;background:#fff;border-radius:8px;padding:8px 0;font-size:14px;cursor:pointer;color:#64748b;font-weight:600;transition:.16s;}
+  .subtab.active{background:#2563eb;color:#fff;border-color:#2563eb;}
+
+  .toast{
+    position:fixed;left:50%;bottom:36px;transform:translate(-50%,20px);
+    background:#1f2937;color:#fff;padding:10px 18px;border-radius:10px;
+    font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:99;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  /* ============ 数学排版（替换掉原来的 .frac 和 .sqrt） ============ */
+  .frac{
+    display: inline-flex;
+    flex-direction: column;
+    vertical-align: middle;
+    text-align: center;
+    margin: 0 4px;
+    line-height: 1.15;
+    color: inherit;
+  }
+  .frac .num{
+    border-bottom: 1px solid currentColor;
+    padding: 0 4px;
+    display: block;
+  }
+  .frac .den{
+    padding: 0 4px;
+    display: block;
+  }
+  
+  .sqrt {
+    display: inline-block;
+    position: relative;
+    padding-left: 0.6em; /* 留出左侧钩子的宽度 */
+    vertical-align: middle;
+    color: inherit;
+  }
+  .sqrt .sqrt-svg {
+    position: absolute;
+    left: 0;
+    top: 0.05em;
+    width: 0.55em;
+    height: calc(100% + 0.1em); /* 高度自适应 */
+    overflow: visible;
+  }
+  .sqrt .radicand {
+    display: inline-block;
+    border-top: 1.2px solid currentColor; /* 横线只加在这里，只覆盖被开方数 */
+    padding: 0.1em 3px 0 4px;
+    margin-top: 0.15em; /* 调整横线与数字的间距 */
+    line-height: 1.1;
+  }
+
+  .pc-list{display:flex;flex-direction:column;gap:8px;}
+  .pc-item{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;border-radius:8px;background:#f8fafc;}
+  .pc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+  @media (max-width:820px){
+    .body{flex-direction:column;}
+    .panel{width:100%;border-right:0;border-bottom:1px solid #e2e8f0;max-height:46vh;}
+    .canvas-wrap{height:54vh;min-height:300px;flex:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 主界面 ==================== -->
+<section id="screen-home" class="screen active">
+  <div class="home">
+    <header class="home-head">
+      <h1>浙教版 · 九年级上册 · 数学动态探究</h1>
+      <p>选择一个演示，点击卡片进入</p>
+    </header>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<!-- ==================== 演示：二次函数的图像 ==================== -->
+<section id="screen-quad" class="screen demo">
+  <header class="topbar">
+    <button class="back" data-home>← 返回</button>
+    <h2>二次函数的图像</h2>
+    <span class="spacer"></span>
+    <label class="setting"><input type="checkbox" id="exactToggle"> 精确计算</label>
+  </header>
+
+  <div class="body">
+    <aside class="panel">
+      <div class="tabs">
+        <button class="tab active" data-form="vertex">顶点式</button>
+        <button class="tab" data-form="root">交点式</button>
+        <button class="tab" data-form="general">一般式</button>
+      </div>
+
+      <div class="pane active" data-pane="vertex">
+        <div class="formula">y = a(x − m)² + k</div>
+        <div class="inputs">
+          <label>a<input id="v-a" type="text" value="1" inputmode="decimal"></label>
+          <label>m<input id="v-m" type="text" value="1" inputmode="decimal"></label>
+          <label>k<input id="v-k" type="text" value="-2" inputmode="decimal"></label>
+        </div>
+        <p class="tip">顶点就是 (m, k)，生成后会以橙色高亮标出。</p>
+        <button class="gen warn" id="transBtn">▶ 平移演示</button>
+      </div>
+
+      <div class="pane" data-pane="root">
+        <div class="formula">y = a(x − x₁)(x − x₂)</div>
+        <div class="inputs">
+          <label>a<input id="r-a" type="text" value="1" inputmode="decimal"></label>
+          <label>x₁<input id="r-x1" type="text" value="-1" inputmode="decimal"></label>
+          <label>x₂<input id="r-x2" type="text" value="3" inputmode="decimal"></label>
+        </div>
+        <p class="tip">与 x 轴的两个交点就是 (x₁, 0) 和 (x₂, 0)，会以红色高亮标出。</p>
+      </div>
+
+      <div class="pane" data-pane="general">
+        <div class="formula">y = ax² + bx + c</div>
+        <div class="inputs">
+          <label>a<input id="g-a" type="text" value="1" inputmode="decimal"></label>
+          <label>b<input id="g-b" type="text" value="-2" inputmode="decimal"></label>
+          <label>c<input id="g-c" type="text" value="-3" inputmode="decimal"></label>
+        </div>
+        <p class="tip">a ≠ 0。系统会自动求顶点、对称轴与坐标轴交点。</p>
+      </div>
+
+      <button class="gen" id="genBtn">生成图像</button>
+      <div class="err" id="err"></div>
+      <div class="info" id="info"></div>
+      <button class="gen secondary" id="resetViewBtn">重置视图</button>
+    </aside>
+
+    <div class="canvas-wrap">
+      <canvas id="cv" class="demo-cv"></canvas>
+      <div id="canvas-html-layer"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 演示：点与圆的位置关系 ==================== -->
+<section id="screen-point-circle" class="screen demo">
+  <header class="topbar">
+    <button class="back" data-home>← 返回</button>
+    <h2>点与圆的位置关系</h2>
+    <span class="spacer"></span>
+  </header>
+
+  <div class="body">
+    <aside class="panel">
+      <p class="tip" style="margin-top:0">点击画布添加点，拖动点可移动。当点接近圆上时会自动吸附。可同时添加多个点。</p>
+      <div class="info" id="pc-info" style="border-top:0;padding-top:0;">
+        <div class="info-row"><span>圆的半径 r</span><b>3</b></div>
+        <div class="pc-list" id="pc-list"></div>
+      </div>
+      <button class="gen secondary" id="pcClearBtn">清空画布</button>
+    </aside>
+    <div class="canvas-wrap">
+      <canvas id="cv-point-circle" class="demo-cv"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 演示：过点作圆 ==================== -->
+<section id="screen-make-circle" class="screen demo">
+  <header class="topbar">
+    <button class="back" data-home>← 返回</button>
+    <h2>过点作圆</h2>
+    <span class="spacer"></span>
+  </header>
+
+  <div class="body">
+    <aside class="panel">
+      <div class="subtabs">
+        <button class="subtab active" data-mode="one">1 点</button>
+        <button class="subtab" data-mode="two">2 点</button>
+        <button class="subtab" data-mode="three">3 点</button>
+      </div>
+      <p class="tip" id="mc-tip" style="margin-top:0"></p>
+      <div class="info" id="mc-info" style="border-top:0;padding-top:0;"></div>
+      <button class="gen secondary" id="mcClearBtn">清空画布</button>
+    </aside>
+    <div class="canvas-wrap">
+      <canvas id="cv-make-circle" class="demo-cv"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 演示：圆心角、弦、弧、弦心距 ==================== -->
+<section id="screen-central-angle" class="screen demo">
+  <header class="topbar">
+    <button class="back" data-home>← 返回</button>
+    <h2>圆心角、弦、弧、弦心距的关系</h2>
+    <span class="spacer"></span>
+  </header>
+
+  <div class="body">
+    <aside class="panel">
+      <p class="tip" style="margin-top:0">拖动圆上的 <b>点B</b> 改变圆心角大小。当数据相等时，对应的条目会变绿，并可进行旋转探究。</p>
+      
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+        <button class="gen" id="caResetBtn" style="margin-top:0;">随机生成相等情况</button>
+        <button class="gen warn" id="caRotateBtn" style="margin-top:0; display:none;">自动旋转重合</button>
+      </div>
+      
+      <div class="info" style="border-top:0; padding-top:0;">
+        <div class="info-row" style="background:#f1f5f9; font-weight:600; color:#334155;">
+          <span>比较项目</span>
+          <b style="display:flex; gap:16px;">
+            <span style="color:#2563eb">扇形 AOB</span>
+            <span style="color:#f59e0b">扇形 COD</span>
+          </b>
+        </div>
+        
+        <div class="info-row" id="ca-row-angle">
+          <span>圆心角</span>
+          <b style="display:flex; gap:16px;">
+            <span id="ca-val-angle1">—</span>
+            <span id="ca-val-angle2">—</span>
+          </b>
+        </div>
+        
+        <div class="info-row" id="ca-row-chord">
+          <span>弦长</span>
+          <b style="display:flex; gap:16px;">
+            <span id="ca-val-chord1">—</span>
+            <span id="ca-val-chord2">—</span>
+          </b>
+        </div>
+
+        <div class="info-row" id="ca-row-dist">
+          <span>弦心距</span>
+          <b style="display:flex; gap:16px;">
+            <span id="ca-val-dist1">—</span>
+            <span id="ca-val-dist2">—</span>
+          </b>
+        </div>
+        
+        <div class="info-row" id="ca-row-arc">
+          <span>弧</span>
+          <b style="display:flex; gap:16px;">
+            <span id="ca-val-arc1" style="color:#2563eb">弧AB</span>
+            <span id="ca-val-arc2" style="color:#f59e0b">弧CD</span>
+          </b>
+        </div>
+      </div>
+      
+      <div style="margin-top:20px; padding:12px; border-radius:8px; background:#f8fafc; font-size:13px; color:#64748b; line-height:1.6;">
+        <b>推论：</b>在同圆或等圆中，如果两个圆心角、两条弧、两条弦、两个弦心距中有一对量相等，那么它们所对应的其余各对量都相等。
+      </div>
+    </aside>
+
+    <div class="canvas-wrap">
+      <canvas id="cv-central-angle" class="demo-cv"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 演示：圆周角定理探究 ==================== -->
+<section id="screen-circumferential-angle" class="screen demo">
+  <header class="topbar">
+    <button class="back" data-home>← 返回</button>
+    <h2>圆周角定理探究</h2>
+    <span class="spacer"></span>
+  </header>
+
+  <div class="body">
+    <aside class="panel">
+      <div class="subtabs">
+        <button class="subtab active" data-mode="center">圆心角对比</button>
+        <button class="subtab" data-mode="diameter">直径所对</button>
+        <button class="subtab" data-mode="same">同弧所对</button>
+      </div>
+      <p class="tip" id="circum-tip" style="margin-top:0"></p>
+      
+      <div class="info" id="circum-info" style="border-top:0; padding-top:0;">
+        <!-- 数据由 JS 动态生成 -->
+      </div>
+      
+      <div style="margin-top:20px; padding:12px; border-radius:8px; background:#f8fafc; font-size:13px; color:#64748b; line-height:1.6;" id="circum-theorem">
+        <!-- 定理文字由 JS 动态生成 -->
+      </div>
+    </aside>
+
+    <div class="canvas-wrap">
+      <canvas id="cv-circum-angle" class="demo-cv"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 演示：圆内接四边形 ==================== -->
+<section id="screen-cyclic-quadrilateral" class="screen demo">
+  <header class="topbar">
+    <button class="back" data-home>← 返回</button>
+    <h2>圆内接四边形</h2>
+    <span class="spacer"></span>
+  </header>
+
+  <div class="body">
+    <aside class="panel">
+      <p class="tip" style="margin-top:0">拖动圆周上的四个顶点，观察四边形的内角变化。</p>
+      
+      <div class="info" style="border-top:0; padding-top:0;">
+        <div class="info-row" style="background:#f1f5f9; font-weight:600; color:#334155;">
+          <span>内角比较</span>
+          <b style="display:flex; gap:16px;">
+            <span style="color:#ef4444">第一组对角</span>
+            <span style="color:#8b5cf6">第二组对角</span>
+          </b>
+        </div>
+        
+        <div class="info-row hl-red">
+          <span>角度</span>
+          <b style="display:flex; gap:16px;">
+            <span id="cq-val-a">—</span>
+            <span id="cq-val-b">—</span>
+          </b>
+        </div>
+        <div class="info-row hl-red" style="border-bottom: 2px dashed #fca5a5;">
+          <span>对应角</span>
+          <b style="display:flex; gap:16px;">
+            <span id="cq-val-c">—</span>
+            <span id="cq-val-d">—</span>
+          </b>
+        </div>
+
+        <div class="info-row" style="background:#dcfce7; margin-top:10px; padding:12px 8px;">
+          <span style="color:#166534; font-weight:600;">两对对角之和</span>
+          <b style="color:#15803d; font-size:15px;">180°</b>
+        </div>
+      </div>
+      
+      <div style="margin-top:20px; padding:12px; border-radius:8px; background:#f8fafc; font-size:13px; color:#64748b; line-height:1.6;">
+        <b>圆内接四边形性质：</b>圆内接四边形的对角互补，即 ∠A + ∠C = 180°，∠B + ∠D = 180°。
+      </div>
+    </aside>
+
+    <div class="canvas-wrap">
+      <canvas id="cv-cyclic-quad" class="demo-cv"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 演示：正多边形与圆 ==================== -->
+<section id="screen-regular-polygon" class="screen demo">
+  <header class="topbar">
+    <button class="back" data-home>← 返回</button>
+    <h2>正多边形与圆</h2>
+    <span class="spacer"></span>
+  </header>
+
+  <div class="body">
+    <aside class="panel">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:14px; font-weight:600; color:#334155; display:flex; justify-content:space-between;">
+          <span>边数 n</span>
+          <span id="rp-n-val" style="color:#2563eb;">5</span>
+        </label>
+        <input type="range" id="rp-slider" min="3" max="12" value="5" style="width:100%; margin-top:8px; accent-color:#2563eb;">
+      </div>
+
+      <div style="display:flex; gap:10px; margin-bottom:16px;">
+        <button class="gen warn" id="rp-rotate-btn" style="margin-top:0; flex:1;">旋转重合测试</button>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:14px; color:#475569; cursor:pointer;">
+          <input type="checkbox" id="rp-axes-check" style="width:16px; height:16px; accent-color:#2563eb;"> 显示对称轴
+        </label>
+      </div>
+      
+      <div class="info" style="border-top:0; padding-top:0;">
+        <div class="info-row" style="background:#f1f5f9; font-weight:600; color:#334155;">
+          <span>关键数据</span>
+          <b>计算结果</b>
+        </div>
+        <div class="info-row hl-blue">
+          <span>中心角 (360°/n)</span>
+          <b id="rp-angle-center">—</b>
+        </div>
+        <div class="info-row hl">
+          <span>内角 (n-2)×180°/n</span>
+          <b id="rp-angle-inner">—</b>
+        </div>
+        <div class="info-row">
+          <span>外角</span>
+          <b id="rp-angle-outer">—</b>
+        </div>
+        <div class="info-row" style="border-top:1px dashed #e2e8f0; margin-top:6px; padding-top:10px;">
+          <span>边长 a</span>
+          <b id="rp-side-length">—</b>
+        </div>
+        <div class="info-row">
+          <span>外接圆半径 R</span>
+          <b>3</b>
+        </div>
+      </div>
+      
+      <div style="margin-top:20px; padding:12px; border-radius:8px; background:#f8fafc; font-size:13px; color:#64748b; line-height:1.6;">
+        <b>探究提示：</b>改变边数，观察中心角、边长与半径的关系。点击旋转测试，体验正多边形的旋转对称性。
+      </div>
+    </aside>
+
+    <div class="canvas-wrap">
+      <canvas id="cv-regular-poly" class="demo-cv"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 演示：弧长与扇形面积 ==================== -->
+<section id="screen-sector-area" class="screen demo">
+  <header class="topbar">
+    <button class="back" data-home>← 返回</button>
+    <h2>弧长与扇形面积</h2>
+    <span class="spacer"></span>
+  </header>
+
+  <div class="body">
+        <aside class="panel">
+      <p class="tip" style="margin-top:0">调节圆心角，观察扇形。点击拼接，将扇形拆解并重新拼成近似长方形。</p>
+      
+      <div style="margin-bottom:16px;">
+        <label style="font-size:14px; font-weight:600; color:#334155; display:flex; justify-content:space-between;">
+          <span>圆心角 θ</span>
+          <span id="sa-theta-val" style="color:#2563eb;">180°</span>
+        </label>
+        <input type="range" id="sa-theta-slider" min="30" max="180" value="180" style="width:100%; margin-top:8px; accent-color:#2563eb;">
+      </div>
+
+      <div style="font-size:14px; font-weight:600; color:#334155; margin-bottom:8px;">选择等分块数</div>
+      <div class="subtabs" style="margin-bottom:16px;">
+        <button class="subtab active" data-n="4">4 块</button>
+        <button class="subtab" data-n="8">8 块</button>
+        <button class="subtab" data-n="16">16 块</button>
+        <button class="subtab" data-n="32">32 块</button>
+      </div>
+
+      <button class="gen" id="sa-animate-btn" style="margin-top:0;">▶ 开始拼接演示</button>
+      
+      <div class="info" style="border-top:0; padding-top:16px; margin-top:10px;">
+        <div class="info-row hl-blue">
+          <span>圆的半径 R</span>
+          <b>3</b>
+        </div>
+        <div class="info-row hl-red">
+          <span>弧长 l</span>
+          <b id="sa-val-l">3π</b>
+        </div>
+        <div class="info-row">
+          <span>扇形面积 S</span>
+          <b id="sa-val-area">4.5π</b>
+        </div>
+        
+        <div style="margin-top:16px; padding:12px; border-radius:8px; background:#eff6ff; font-size:14px; color:#1d4ed8; line-height:1.6; font-weight:600; text-align:center;">
+          拼成长方形的底 = ½ l，高 = R<br>
+          面积 S = 底 × 高 = ½ l × R<br>
+          <span style="font-size:16px; color:#1e40af;">即 S = ½ l R</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="canvas-wrap">
+      <canvas id="cv-sector-area" class="demo-cv"></canvas>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   通用工具
+   ========================================================= */
+function fmt(v, d = 2){
+  if (!isFinite(v)) return '—';
+  let s = v.toFixed(d);
+  if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+  if (s === '-0' || s === '') s = '0';
+  return s;
+}
+function formatInputNumber(v){
+  if (!isFinite(v)) return '0';
+  if (Math.abs(v) < 0.005) return '0';
+  let s = v.toFixed(2);
+  if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+  if (s === '-0') s = '0';
+  return s;
+}
+function niceStep(raw){
+  if (!isFinite(raw) || raw <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const n = raw / p;
+  let m = 1;
+  if (n > 5) m = 10;
+  else if (n > 2) m = 5;
+  else if (n > 1) m = 2;
+  return m * p;
+}
+function decimalsFor(step){
+  if (step >= 1) return 0;
+  return Math.min(4, Math.ceil(-Math.log10(step) - 1e-9));
+}
+function gcd(a, b){
+  a = Math.abs(Math.round(a)); b = Math.abs(Math.round(b));
+  while (b){ const t = a % b; a = b; b = t; }
+  return a || 1;
+}
+function easeInOut(t){
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+function randomRGB(){
+  const r = Math.floor(Math.random() * 156 + 50);
+  const g = Math.floor(Math.random() * 156 + 50);
+  const b = Math.floor(Math.random() * 156 + 50);
+  return { r, g, b, css: `rgb(${r},${g},${b})`, light: `rgba(${r},${g},${b},0.12)` };
+}
+
+let toastTimer = null;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1900);
+}
+
+/* =========================================================
+   根号化简 & HTML 数学排版
+   ========================================================= */
+function simplifySqrtInt(n){
+  n = Math.round(n);
+  if (n <= 0) return { s: 0, r: 1 };
+  let s = 1, r = n;
+  for (let i = 2; i * i <= r; i++){
+    while (r % (i * i) === 0){ r /= (i * i); s *= i; }
+  }
+  return { s, r };
+}
+function formatRational(num, den){
+  if (den === 0) return '—';
+  if (den < 0){ num = -num; den = -den; }
+  const g = gcd(num, den);
+  num /= g; den /= g;
+  if (den === 1) return String(num);
+  return num + '/' + den;
+}
+function rationalHtml(num, den){
+  if (den === 0) return '—';
+  if (den < 0){ num = -num; den = -den; }
+  const g = gcd(num, den);
+  num /= g; den /= g;
+  if (den === 1) return String(num);
+  return `<span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span>`;
+}
+function surdToString(p, q, r, d){
+  if (r === 1) return formatRational(p + q, d);
+  const aq = Math.abs(q);
+  const rad = (aq === 1 ? '' : aq) + '√' + r;
+  let core;
+  if (p === 0){
+    core = (q < 0 ? '−' : '') + rad;
+  } else if (q === 0){
+    core = String(p);
+  } else {
+    core = p + (q > 0 ? ' + ' : ' − ') + rad;
+  }
+  if (d === 1) return core;
+  return '(' + core + ')/' + d;
+}
+function htmlSurd(p, q, r, d){
+  if (r === 1) return rationalHtml(p + q, d);
+  let terms = [];
+  if (p !== 0) terms.push(String(p));
+  if (q !== 0){
+    const aq = Math.abs(q);
+    const coef = aq === 1 ? '' : aq;
+    
+    // 这里换成了 SVG 绘制左勾，让排版像 LaTeX 一样完美
+    const sqrtHtml = `<span class="sqrt"><svg class="sqrt-svg" viewBox="0 0 10 14" preserveAspectRatio="none"><path d="M 1 8 L 4 14 L 10 1" fill="none" stroke="currentColor" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg><span class="radicand">${r}</span></span>`;
+    
+    if (p === 0){
+      terms.push((q < 0 ? '−' : '') + coef + sqrtHtml);
+    } else {
+      terms.push((q > 0 ? ' + ' : ' − ') + coef + sqrtHtml);
+    }
+  }
+  let core = terms.join('') || '0';
+  if (d === 1) return core;
+  return `<span class="frac"><span class="num">${core}</span><span class="den">${d}</span></span>`;
+}
+function tryScaleToInt(A, B, C){
+  const scales = [1, 10, 100, 1000, 10000, 100000, 1000000];
+  for (const s of scales){
+    const a = A * s, b = B * s, c = C * s;
+    const ra = Math.round(a), rb = Math.round(b), rc = Math.round(c);
+    const tolA = 1e-7 * Math.max(1, Math.abs(a));
+    const tolB = 1e-7 * Math.max(1, Math.abs(b));
+    const tolC = 1e-7 * Math.max(1, Math.abs(c));
+    if (Math.abs(a - ra) < tolA && Math.abs(b - rb) < tolB && Math.abs(c - rc) < tolC){
+      return [ra, rb, rc];
+    }
+  }
+  return null;
+}
+function exactRootLabels(model){
+  const { A, B, C } = model;
+  const scaled = tryScaleToInt(A, B, C);
+  if (!scaled) return null;
+  const [ai, bi, ci] = scaled;
+  const D = bi * bi - 4 * ai * ci;
+  if (D < 0) return null;
+  const { s, r } = simplifySqrtInt(D);
+  let p = -bi, q = s, d = 2 * ai;
+  if (d < 0){ p = -p; q = -q; d = -d; }
+  const g = gcd(gcd(p, q), d);
+  p /= g; q /= g; d /= g;
+  const sq = Math.sqrt(r);
+  const v1 = (p + q * sq) / d;
+  const v2 = (p - q * sq) / d;
+  const out = [
+    { v: v1, s: surdToString(p, q, r, d), h: htmlSurd(p, q, r, d) },
+    { v: v2, s: surdToString(p, -q, r, d), h: htmlSurd(p, -q, r, d) }
+  ];
+  out.sort((x, y) => x.v - y.v);
+  if (Math.abs(v1 - v2) < 1e-9) return [out[0]];
+  return out;
+}
+
+/* =========================================================
+   主界面卡片
+   ========================================================= */
+const THUMBS = {
+  quad: `<svg viewBox="0 0 150 100">
+      <line x1="8" y1="62" x2="142" y2="62" stroke="#cbd5e1" stroke-width="1.5"/>
+      <line x1="75" y1="6" x2="75" y2="94" stroke="#cbd5e1" stroke-width="1.5"/>
+      <path d="M28 22 Q75 154 122 22" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="75" cy="88" r="4.5" fill="#f59e0b"/>
+    </svg>`,
+  pointCircle: `<svg viewBox="0 0 150 100">
+      <circle cx="75" cy="50" r="32" fill="rgba(14,165,233,0.08)" stroke="#0ea5e9" stroke-width="2.4"/>
+      <circle cx="75" cy="50" r="3" fill="#0ea5e9"/>
+      <line x1="75" y1="50" x2="108" y2="36" stroke="#ef4444" stroke-width="1.8" stroke-dasharray="4 3"/>
+      <circle cx="108" cy="36" r="5" fill="#ef4444"/>
+      <text x="93" y="30" font-size="10" fill="#ef4444">d</text>
+      <text x="112" y="52" font-size="11" fill="#ef4444">圆外</text>
+    </svg>`,
+  makeCircle: `<svg viewBox="0 0 150 100">
+      <circle cx="75" cy="50" r="28" fill="rgba(37,99,235,0.06)" stroke="#2563eb" stroke-width="2.2"/>
+      <line x1="40" y1="18" x2="110" y2="82" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <circle cx="55" cy="72" r="4" fill="#2563eb"/>
+      <circle cx="95" cy="28" r="4" fill="#2563eb"/>
+      <circle cx="75" cy="50" r="3.2" fill="#f59e0b"/>
+      <text x="78" y="46" font-size="9" fill="#b45309">O</text>
+    </svg>`,
+  centralAngle: `<svg viewBox="0 0 150 100">
+      <!-- 背景圆 (R=40, 圆心 75,50) -->
+      <circle cx="75" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+      
+      <!-- 蓝色扇形 (右侧 0° ~ 60°) -->
+      <!-- 填充扇形 -->
+      <path d="M 75 50 L 115 50 A 40 40 0 0 0 95 15.4 Z" fill="rgba(37,99,235,0.1)" stroke="none"/>
+      <!-- 弦心距 (虚线) -->
+      <line x1="75" y1="50" x2="105" y2="32.7" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="3 3"/>
+      <!-- 弦 -->
+      <line x1="115" y1="50" x2="95" y2="15.4" stroke="#2563eb" stroke-width="1.5"/>
+      <!-- 半径 -->
+      <line x1="75" y1="50" x2="115" y2="50" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="75" y1="50" x2="95" y2="15.4" stroke="#2563eb" stroke-width="1.5"/>
+      <!-- 高亮弧 -->
+      <path d="M 115 50 A 40 40 0 0 0 95 15.4" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+      
+      <!-- 橙色扇形 (左侧 180° ~ 240°) -->
+      <!-- 填充扇形 -->
+      <path d="M 75 50 L 35 50 A 40 40 0 0 0 55 84.6 Z" fill="rgba(245,158,11,0.1)" stroke="none"/>
+      <!-- 弦心距 (虚线) -->
+      <line x1="75" y1="50" x2="45" y2="67.3" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="3 3"/>
+      <!-- 弦 -->
+      <line x1="35" y1="50" x2="55" y2="84.6" stroke="#f59e0b" stroke-width="1.5"/>
+      <!-- 半径 -->
+      <line x1="75" y1="50" x2="35" y2="50" stroke="#f59e0b" stroke-width="1.5"/>
+      <line x1="75" y1="50" x2="55" y2="84.6" stroke="#f59e0b" stroke-width="1.5"/>
+      <!-- 高亮弧 -->
+      <path d="M 35 50 A 40 40 0 0 0 55 84.6" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+    
+      <!-- 圆心与端点 (坐标已严格对齐 R=40) -->
+      <circle cx="75" cy="50" r="3" fill="#94a3b8"/>
+      <circle cx="115" cy="50" r="3.5" fill="#2563eb"/>
+      <circle cx="95" cy="15.4" r="3.5" fill="#2563eb"/>
+      <circle cx="35" cy="50" r="3.5" fill="#f59e0b"/>
+      <circle cx="55" cy="84.6" r="3.5" fill="#f59e0b"/>
+    </svg>`,
+  circumAngle: `<svg viewBox="0 0 150 100">
+      <!-- 背景圆 -->
+      <circle cx="75" cy="50" r="35" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+      
+      <!-- 圆心角 (蓝色) -->
+      <line x1="75" y1="50" x2="99.75" y2="25.25" stroke="#2563eb" stroke-width="1.5"/>
+      <line x1="75" y1="50" x2="99.75" y2="74.75" stroke="#2563eb" stroke-width="1.5"/>
+      <path d="M 99.75 25.25 A 35 35 0 0 1 99.75 74.75" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="3 2"/>
+      
+      <!-- 圆周角 (橙色) -->
+      <line x1="40" y1="50" x2="99.75" y2="25.25" stroke="#f59e0b" stroke-width="1.5"/>
+      <line x1="40" y1="50" x2="99.75" y2="74.75" stroke="#f59e0b" stroke-width="1.5"/>
+      <path d="M 99.75 25.25 A 35 35 0 0 1 99.75 74.75" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+      
+      <!-- 顶点 -->
+      <circle cx="75" cy="50" r="3" fill="#94a3b8"/>
+      <circle cx="40" cy="50" r="3.5" fill="#f59e0b"/>
+      <circle cx="99.75" cy="25.25" r="3.5" fill="#2563eb"/>
+      <circle cx="99.75" cy="74.75" r="3.5" fill="#2563eb"/>
+    </svg>`,
+  cyclicQuad: `<svg viewBox="0 0 150 100">
+      <!-- 背景圆 -->
+      <circle cx="75" cy="50" r="35" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>      
+      <!-- 四边形 (正方形) -->
+      <polygon points="75,15 110,50 75,85 40,50" fill="rgba(37,99,235,0.08)" stroke="#2563eb" stroke-width="1.8"/>
+      <!-- 顶点 -->
+      <circle cx="75" cy="15" r="3.5" fill="#2563eb"/>
+      <circle cx="110" cy="50" r="3.5" fill="#2563eb"/>
+      <circle cx="75" cy="85" r="3.5" fill="#2563eb"/>
+      <circle cx="40" cy="50" r="3.5" fill="#2563eb"/>
+    </svg>`,
+  regularPolygon: `<svg viewBox="0 0 150 100">
+      <circle cx="75" cy="50" r="35" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+      <polygon points="75,15 108.3,39.2 95.6,78.3 54.4,78.3 41.7,39.2" fill="rgba(37,99,235,0.08)" stroke="#2563eb" stroke-width="1.8"/>
+      <line x1="75" y1="50" x2="75" y2="15" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="3 2"/>
+      <line x1="75" y1="50" x2="91.6" y2="27.1" stroke="#f59e0b" stroke-width="1.5"/>
+      <line x1="75" y1="50" x2="75" y2="48.5" stroke="#ef4444" stroke-width="1.5"/>
+      <line x1="75" y1="48.5" x2="91.6" y2="27.1" stroke="#ef4444" stroke-width="1.5"/>
+      <circle cx="75" cy="50" r="3" fill="#94a3b8"/>
+      <path d="M 75 38 A 15 15 0 0 1 83 40" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+    </svg>`,
+  sectorArea: `<svg viewBox="0 0 150 100">
+      <path d="M 75 50 L 40 50 A 35 35 0 0 0 110 50 Z" fill="rgba(37,99,235,0.15)" stroke="#2563eb" stroke-width="1.5"/>
+      <path d="M 40 50 A 35 35 0 0 0 110 50" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+      <line x1="75" y1="50" x2="40" y2="50" stroke="#f59e0b" stroke-width="2"/>
+      <line x1="75" y1="50" x2="110" y2="50" stroke="#f59e0b" stroke-width="2"/>
+      <path d="M 75 65 L 75 35" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <circle cx="75" cy="50" r="3" fill="#94a3b8"/>
+    </svg>`
+};
+
+const DEMOS = [
+  { id:'quad', title:'二次函数的图像', ready:true,
+    desc:'输入顶点式 / 交点式 / 一般式，自动画出抛物线。支持平移演示、缩放与拖动关键点，精确计算显示根号。',
+    thumb: THUMBS.quad },
+  { id:'point-circle', title:'点与圆的位置关系', ready:true,
+    desc:'点击添加点、拖动移动点，实时显示点到圆心的距离并判断圆内、圆上、圆外。接近圆上时自动吸附。',
+    thumb: THUMBS.pointCircle },
+  { id:'make-circle', title:'过点作圆', ready:true,
+    desc:'一点、两点、三点作圆。自动显示中垂线，支持拖动定点与圆心，实时更新圆。可同时保留多个不同颜色的圆。',
+    thumb: THUMBS.makeCircle },
+  { id:'central-angle', title:'圆心角、弦、弧、弦心距关系', ready:true,
+    desc:'拖动圆上的点，探索在同圆中，圆心角、弦、弧、弦心距中有一组量相等时，其余各组量是否也相等。',
+    thumb: THUMBS.centralAngle },
+  { id:'circumferential-angle', title:'圆周角定理探究', ready:true,
+    desc:'拖动顶点或两端点，探索圆周角与圆心角的关系、直径所对圆周角以及同弧所对圆周角的规律。',
+    thumb: THUMBS.circumAngle },
+  { id:'cyclic-quadrilateral', title:'圆内接四边形', ready:true,
+    desc:'拖动四边形的任意顶点，观察对角之间的度数变化，验证对角互补的规律。',
+    thumb: THUMBS.cyclicQuad },
+  { id:'regular-polygon', title:'正多边形与圆', ready:true,
+    desc:'调节边数生成正多边形，高亮核心直角三角形模型，并可演示旋转重合与对称轴。',
+    thumb: THUMBS.regularPolygon },
+  { id:'sector-area', title:'弧长与扇形面积', ready:true,
+    desc:'通过将扇形等分成若干小块并交错拼接，直观推导扇形面积公式 S = ½ l R。',
+    thumb: THUMBS.sectorArea }
+];
+
+const gridEl = document.getElementById('grid');
+gridEl.innerHTML = DEMOS.map(d => `
+  <div class="card ${d.ready ? '' : 'disabled'}" data-id="${d.id}">
+    <div class="thumb">${d.thumb}</div>
+    <div class="card-body">
+      <h3>${d.title}</h3>
+      <p>${d.desc}</p>
+      <span class="badge ${d.ready ? '' : 'soon'}">${d.ready ? '可演示' : '敬请期待'}</span>
+    </div>
+  </div>
+`).join('');
+
+gridEl.addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const d = DEMOS.find(x => x.id === card.dataset.id);
+  if (!d) return;
+  if (!d.ready){ toast('该演示正在建设中～'); return; }
+  showScreen('screen-' + d.id);
+});
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  window.scrollTo(0, 0);
+  if (id === 'screen-quad'){
+    requestAnimationFrame(() => {
+      if (!state.model) generate();
+      else { drawScene(); renderInfo(); }
+    });
+  }
+  if (id === 'screen-point-circle'){
+    requestAnimationFrame(() => drawPointCircleScene());
+  }
+  if (id === 'screen-make-circle'){
+    requestAnimationFrame(() => drawMakeCircleScene());
+  }
+  if (id === 'screen-central-angle'){
+    requestAnimationFrame(() => drawCentralAngleScene());
+  }
+  if (id === 'screen-circumferential-angle'){
+    requestAnimationFrame(() => drawCircumAngleScene());
+  }
+  if (id === 'screen-cyclic-quadrilateral'){
+    requestAnimationFrame(() => drawCyclicQuadScene());
+  }
+  if (id === 'screen-regular-polygon'){
+    requestAnimationFrame(() => drawRegularPolyScene());
+  }
+  if (id === 'screen-sector-area'){
+    requestAnimationFrame(() => drawSectorAreaScene());
+  }
+}
+document.querySelectorAll('[data-home]').forEach(b => {
+  b.addEventListener('click', () => showScreen('screen-home'));
+});
+
+/* =========================================================
+   二次函数
+   ========================================================= */
+const state = { form: 'vertex', model: null };
+const view = { cx: 0, cy: 0, scale: 40 };
+let translationAnim = null;
+let exactMode = false;
+
+const cv = document.getElementById('cv');
+const EPS = 1e-9;
+
+function getCanvasSize(canvas){
+  const c = canvas || cv;
+  return { W: c.clientWidth || 640, H: c.clientHeight || 420 };
+}
+function worldToScreen(x, y){
+  const { W, H } = getCanvasSize();
+  return { x: W / 2 + (x - view.cx) * view.scale, y: H / 2 - (y - view.cy) * view.scale };
+}
+function screenToWorld(sx, sy){
+  const { W, H } = getCanvasSize();
+  return { x: view.cx + (sx - W / 2) / view.scale, y: view.cy + (H / 2 - sy) / view.scale };
+}
+function getVisibleRange(){
+  const { W, H } = getCanvasSize();
+  const hw = (W / 2) / view.scale, hh = (H / 2) / view.scale;
+  return { xmin: view.cx - hw, xmax: view.cx + hw, ymin: view.cy - hh, ymax: view.cy + hh };
+}
+function computeModel(A, B, C){
+  const h = -B / (2 * A);
+  const k = C - B * B / (4 * A);
+  const disc = B * B - 4 * A * C;
+  return { A, B, C, h, k, disc };
+}
+
+document.querySelectorAll('#screen-quad .tab').forEach(t => {
+  t.addEventListener('click', () => setForm(t.dataset.form));
+});
+function setForm(form){
+  state.form = form;
+  document.querySelectorAll('#screen-quad .tab').forEach(x => x.classList.toggle('active', x.dataset.form === form));
+  document.querySelectorAll('#screen-quad .pane').forEach(p => p.classList.toggle('active', p.dataset.pane === form));
+}
+
+document.getElementById('exactToggle').addEventListener('change', e => {
+  exactMode = e.target.checked;
+  if (state.model){
+    drawScene();
+    renderInfo();
+  }
+});
+
+document.getElementById('genBtn').addEventListener('click', generate);
+document.getElementById('resetViewBtn').addEventListener('click', () => {
+  if (!state.model) return;
+  if (translationAnim){ translationAnim = null; }
+  const auto = computeAutoView(state.model);
+  view.cx = auto.cx; view.cy = auto.cy; view.scale = auto.scale;
+  drawScene();
+  renderInfo();
+});
+document.getElementById('transBtn').addEventListener('click', startTranslation);
+document.querySelectorAll('#screen-quad .inputs input').forEach(inp => {
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+});
+
+function readInput(id, label, errs){
+  let raw = (document.getElementById(id).value || '').trim();
+  raw = raw
+    .replace(/[－—–−]/g, '-')
+    .replace(/[＋]/g, '+')
+    .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .replace(/[．。]/g, '.');
+  if (raw === ''){ errs.push(`${label} 不能为空`); return NaN; }
+  const v = Number(raw);
+  if (!isFinite(v)){ errs.push(`${label} 不是有效数字（输入的是“${raw}”）`); return NaN; }
+  return v;
+}
+
+function generate(){
+  const form = state.form;
+  const errs = [];
+  let A, B, C;
+
+  if (form === 'vertex'){
+    const a = readInput('v-a', 'a', errs);
+    const m = readInput('v-m', 'm', errs);
+    const k = readInput('v-k', 'k', errs);
+    if (errs.length) return showErrors(errs);
+    if (a === 0){ errs.push('a 不能为 0，否则不是二次函数'); return showErrors(errs); }
+    A = a; B = -2 * a * m; C = a * m * m + k;
+  } else if (form === 'root'){
+    const a  = readInput('r-a', 'a', errs);
+    const x1 = readInput('r-x1', 'x₁', errs);
+    const x2 = readInput('r-x2', 'x₂', errs);
+    if (errs.length) return showErrors(errs);
+    if (a === 0){ errs.push('a 不能为 0，否则不是二次函数'); return showErrors(errs); }
+    A = a; B = -a * (x1 + x2); C = a * x1 * x2;
+  } else {
+    const a = readInput('g-a', 'a', errs);
+    const b = readInput('g-b', 'b', errs);
+    const c = readInput('g-c', 'c', errs);
+    if (errs.length) return showErrors(errs);
+    if (a === 0){ errs.push('a 不能为 0，否则不是二次函数'); return showErrors(errs); }
+    A = a; B = b; C = c;
+  }
+
+  if (Math.abs(A) < 1e-8 || Math.abs(A) > 1e8){
+    errs.push('a 的绝对值过大或过小，请输入 1e-8 ~ 1e8 之间的数');
+    return showErrors(errs);
+  }
+
+  translationAnim = null;
+  state.model = computeModel(A, B, C);
+  document.getElementById('err').innerHTML = '';
+
+  const auto = computeAutoView(state.model);
+  view.cx = auto.cx; view.cy = auto.cy; view.scale = auto.scale;
+
+  drawScene();
+  renderInfo();
+}
+
+function showErrors(errs){
+  document.getElementById('err').innerHTML = errs.map(s => '⚠ ' + s).join('<br>');
+  state.model = null;
+  translationAnim = null;
+  document.getElementById('info').innerHTML = '';
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  document.getElementById('canvas-html-layer').innerHTML = '';
+}
+
+function computeWindow(A, B, C){
+  const h = -B / (2 * A);
+  const k = C - B * B / (4 * A);
+  const disc = B * B - 4 * A * C;
+
+  let dx = 0;
+  if (disc > 0){
+    const sq = Math.sqrt(disc);
+    const r1 = (-B - sq) / (2 * A), r2 = (-B + sq) / (2 * A);
+    dx = Math.max(dx, Math.abs(r2 - r1) * 0.85);
+  }
+  const targetY = Math.max(Math.abs(k), 1);
+  const dy = Math.sqrt(targetY / Math.abs(A));
+  if (isFinite(dy) && dy > 0) dx = Math.max(dx, dy);
+  dx = Math.max(dx, Math.abs(h) * 1.35);
+  if (!isFinite(dx) || dx <= 1e-9) dx = 2;
+
+  let xmin = h - dx * 1.15, xmax = h + dx * 1.15;
+
+  let ymin = Infinity, ymax = -Infinity;
+  const N = 260;
+  for (let i = 0; i <= N; i++){
+    const xv = xmin + (xmax - xmin) * i / N;
+    const yv = A * xv * xv + B * xv + C;
+    if (yv < ymin) ymin = yv;
+    if (yv > ymax) ymax = yv;
+  }
+  if (k < ymin) ymin = k;
+  if (k > ymax) ymax = k;
+
+  let spanY = ymax - ymin;
+  if (!isFinite(spanY) || spanY < 1e-9) spanY = Math.max(Math.abs(k), 1) * 2;
+  const padY = spanY * 0.14;
+  ymin -= padY; ymax += padY;
+
+  let ymin2 = ymin, ymax2 = ymax;
+  if (ymin > 0) ymin2 = 0;
+  if (ymax < 0) ymax2 = 0;
+  if (ymin2 !== ymin || ymax2 !== ymax){
+    const xr = xmax - xmin, yr2 = ymax2 - ymin2;
+    if (yr2 <= xr * 8){ ymin = ymin2; ymax = ymax2; }
+  }
+  return { xmin, xmax, ymin, ymax };
+}
+
+function computeAutoView(model){
+  const { W, H } = getCanvasSize();
+  const win = computeWindow(model.A, model.B, model.C);
+  const PAD = 55;
+  const availW = Math.max(60, W - PAD * 2);
+  const availH = Math.max(60, H - PAD * 2);
+  let scale = Math.min(availW / (win.xmax - win.xmin), availH / (win.ymax - win.ymin));
+  if (!isFinite(scale) || scale <= 0) scale = 40;
+  return { cx: (win.xmin + win.xmax) / 2, cy: (win.ymin + win.ymax) / 2, scale };
+}
+
+function prepareCanvas(canvas){
+  const { W, H } = getCanvasSize(canvas);
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)){
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+  return { ctx, W, H };
+}
+
+function drawScene(){
+  const model = state.model;
+  if (!model) return;
+  const { ctx, W, H } = prepareCanvas(cv);
+  if (W <= 0 || H <= 0) return;
+
+  drawGridAndAxes(ctx, W, H);
+  drawSymmetryAxis(ctx, W, H, model);
+  drawParabolaPath(ctx, model, '#2563eb', 2.8, null);
+  drawControlPoints(ctx, W, H, model);
+  drawHTMLOverlays(W, H, model);
+}
+
+// 将红点上的特殊符号用 HTML 渲染，实现完美的根号和分式
+function drawHTMLOverlays(W, H, model){
+  const layer = document.getElementById('canvas-html-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  if (!exactMode || !model) return;
+
+  const roots = getRootInfo(model);
+  if (model.disc >= -EPS) {
+    roots.forEach(r => {
+      // 含有根号或分式时，用 HTML 覆盖
+      if (r.h && (r.h.includes('sqrt') || r.h.includes('frac'))) {
+        const p = worldToScreen(r.v, 0);
+        if (p.x > -40 && p.x < W + 40 && p.y > -40 && p.y < H + 40) {
+          const div = document.createElement('div');
+          div.style.position = 'absolute';
+          div.style.left = p.x + 'px';
+          div.style.top = (p.y + 22) + 'px';
+          div.style.transform = 'translate(-50%, -50%)';
+          div.style.backgroundColor = 'rgba(255,255,255,0.92)';
+          div.style.padding = '2px 6px';
+          div.style.borderRadius = '4px';
+          div.style.color = '#dc2626';
+          div.style.fontSize = '13px';
+          div.style.fontWeight = '600';
+          div.style.pointerEvents = 'none';
+          div.style.whiteSpace = 'nowrap';
+          div.style.display = 'flex';
+          div.style.alignItems = 'center';
+          div.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          div.innerHTML = `(${r.h}, 0)`;
+          layer.appendChild(div);
+        }
+      }
+    });
+  }
+}
+
+function drawGridAndAxes(ctx, W, H){
+  const { xmin, xmax, ymin, ymax } = getVisibleRange();
+  const step = niceStep(80 / view.scale);
+  const dec = decimalsFor(step);
+
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#eef2f8';
+  ctx.beginPath();
+  const ix0 = Math.ceil(xmin / step), ix1 = Math.floor(xmax / step);
+  for (let i = ix0; i <= ix1; i++){
+    const px = Math.round(worldToScreen(i * step, 0).x) + 0.5;
+    ctx.moveTo(px, 0); ctx.lineTo(px, H);
+  }
+  const iy0 = Math.ceil(ymin / step), iy1 = Math.floor(ymax / step);
+  for (let j = iy0; j <= iy1; j++){
+    const py = Math.round(worldToScreen(0, j * step).y) + 0.5;
+    ctx.moveTo(0, py); ctx.lineTo(W, py);
+  }
+  ctx.stroke();
+
+  const hasY = xmin <= 0 && xmax >= 0;
+  const hasX = ymin <= 0 && ymax >= 0;
+  const axisColor = '#94a3b8';
+
+  if (hasX){
+    const py = Math.round(worldToScreen(0, 0).y) + 0.5;
+    ctx.strokeStyle = axisColor; ctx.fillStyle = axisColor; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W - 12, py); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W - 2, py); ctx.lineTo(W - 14, py - 5); ctx.lineTo(W - 14, py + 5);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'italic 600 15px Georgia, serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText('x', W - 20, py - 8);
+
+    ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let i = ix0; i <= ix1; i++){
+      const xv = i * step;
+      if (Math.abs(xv) < step * 1e-6) continue;
+      const px = worldToScreen(xv, 0).x;
+      if (px < 18 || px > W - 18) continue;
+      ctx.strokeStyle = axisColor; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + 4); ctx.stroke();
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(fmt(xv, dec), px, py + 6);
+    }
+  }
+
+  if (hasY){
+    const px = Math.round(worldToScreen(0, 0).x) + 0.5;
+    ctx.strokeStyle = axisColor; ctx.fillStyle = axisColor; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(px, H); ctx.lineTo(px, 12); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(px, 2); ctx.lineTo(px - 5, 14); ctx.lineTo(px + 5, 14);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'italic 600 15px Georgia, serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('y', px + 8, 8);
+
+    ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let j = iy0; j <= iy1; j++){
+      const yv = j * step;
+      if (Math.abs(yv) < step * 1e-6) continue;
+      const py = worldToScreen(0, yv).y;
+      if (py < 18 || py > H - 18) continue;
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(fmt(yv, dec), px - 8, py);
+    }
+  }
+
+  if (hasX && hasY){
+    const o = worldToScreen(0, 0);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.fillText('O', o.x - 6, o.y + 5);
+  }
+}
+
+function drawParabolaPath(ctx, model, color, lineWidth, dash){
+  const { A, B, C } = model;
+  const { W, H } = getCanvasSize();
+  ctx.save();
+  ctx.setLineDash(dash || []);
+  ctx.beginPath();
+  let started = false;
+  for (let sx = -2; sx <= W + 2; sx += 1){
+    const wx = view.cx + (sx - W / 2) / view.scale;
+    const wy = A * wx * wx + B * wx + C;
+    let sy = H / 2 - (wy - view.cy) * view.scale;
+    if (!isFinite(sy)) continue;
+    if (sy < -1e5) sy = -1e5;
+    if (sy > H + 1e5) sy = H + 1e5;
+    if (!started){ ctx.moveTo(sx, sy); started = true; }
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSymmetryAxis(ctx, W, H, model){
+  const m = model;
+  const { xmin, xmax } = getVisibleRange();
+  if (m.h <= xmin || m.h >= xmax) return;
+  const px = worldToScreen(m.h, 0).x;
+  ctx.save();
+  ctx.setLineDash([7, 7]);
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 1.7;
+  ctx.beginPath(); ctx.moveTo(px, 8); ctx.lineTo(px, H - 8); ctx.stroke();
+  ctx.restore();
+  drawLabel(ctx, `对称轴  x = ${fmt(m.h)}`, px, 22, '#a855f7', 10, 0, W, H, 'left');
+}
+
+function getRootInfo(model){
+  const { A, B, disc } = model;
+  if (disc < -EPS) return [];
+  const sq = Math.sqrt(Math.max(0, disc));
+  const r1 = (-B - sq) / (2 * A);
+  const r2 = (-B + sq) / (2 * A);
+  const labels = exactRootLabels(model);
+  let out;
+  if (labels){
+    out = labels.map(o => ({ v: o.v, s: o.s, h: o.h }));
+  } else {
+    out = [
+      { v: r1, s: fmt(r1), h: fmt(r1) },
+      { v: r2, s: fmt(r2), h: fmt(r2) }
+    ];
+    out.sort((a, b) => a.v - b.v);
+    if (Math.abs(r1 - r2) < 1e-9) out = [out[0]];
+  }
+  return out;
+}
+
+function drawControlPoints(ctx, W, H, model){
+  const form = state.form;
+  const isVertexForm = form === 'vertex';
+  const isRootForm = form === 'root';
+
+  const roots = getRootInfo(model);
+  const vp = worldToScreen(model.h, model.k);
+  const singleRoot = roots.length === 1;
+  const overlap = singleRoot &&
+    Math.hypot(vp.x - worldToScreen(roots[0].v, 0).x, vp.y - worldToScreen(roots[0].v, 0).y) < 10;
+
+  if (!overlap){
+    roots.forEach(r => {
+      const p = worldToScreen(r.v, 0);
+      if (p.x < -40 || p.x > W + 40 || p.y < -40 || p.y > H + 40) return;
+      const label = exactMode ? r.s : fmt(r.v, 2);
+      dot(ctx, p.x, p.y, '#ef4444', isRootForm ? 7 : 6);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(239,68,68,0.38)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // 如果开启了精确模式且含有根式，交由 HTML 浮层渲染
+      const useHTML = exactMode && (r.h.includes('sqrt') || r.h.includes('frac'));
+      if (!useHTML) {
+        drawLabel(ctx, `(${label}, 0)`, p.x, p.y, '#dc2626', 0, 22, W, H, 'center');
+      }
+    });
+  }
+
+  if (vp.x > -40 && vp.x < W + 40 && vp.y > -40 && vp.y < H + 40){
+    const vColor = isVertexForm ? '#f59e0b' : '#1d4ed8';
+    dot(ctx, vp.x, vp.y, vColor, isVertexForm ? 8 : 6.5);
+    ctx.beginPath();
+    ctx.arc(vp.x, vp.y, 11, 0, Math.PI * 2);
+    ctx.strokeStyle = isVertexForm ? 'rgba(245,158,11,0.42)' : 'rgba(29,78,216,0.35)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawLabel(ctx, `顶点 (${fmt(model.h)}, ${fmt(model.k)})`, vp.x, vp.y,
+              isVertexForm ? '#b45309' : '#1d4ed8', 0, -18, W, H, 'center');
+  }
+
+  const { xmin, xmax } = getVisibleRange();
+  if (xmin <= 0 && xmax >= 0){
+    const p = worldToScreen(0, model.C);
+    if (p.x > -40 && p.x < W + 40 && p.y > -40 && p.y < H + 40){
+      dot(ctx, p.x, p.y, '#10b981', 5.5);
+      drawLabel(ctx, `(0, ${fmt(model.C)})`, p.x, p.y, '#047857', -14, 16, W, H, 'right');
+    }
+  }
+}
+
+function dot(ctx, x, y, color, r){
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.lineWidth = 2.2;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+}
+
+// 修改了绘制文字的方法，改用白色圆角背景，避免文字变灰发虚
+function drawLabel(ctx, text, px, py, color, offX, offY, W, H, align){
+  ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+  const w = ctx.measureText(text).width;
+  let a = align || 'left';
+  let x = px + offX, y = py + offY;
+
+  if (a === 'center'){
+    if (x - w / 2 < 6) x = 6 + w / 2;
+    if (x + w / 2 > W - 6) x = W - 6 - w / 2;
+  } else if (a === 'left'){
+    if (x + w > W - 6){ a = 'right'; x = px - Math.abs(offX); }
+  } else {
+    if (x - w < 6){ a = 'left'; x = px + Math.abs(offX); }
+  }
+  if (y < 12) y = 12;
+  if (y > H - 12) y = H - 12;
+
+  ctx.textAlign = a;
+  ctx.textBaseline = 'middle';
+  
+  const padX = 5, padY = 3;
+  let bx = x;
+  if (a === 'center') bx = x - w/2;
+  else if (a === 'right') bx = x - w;
+  
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(bx - padX, y - 7 - padY, w + padX*2, 14 + padY*2, 4);
+  } else {
+    ctx.rect(bx - padX, y - 7 - padY, w + padX*2, 14 + padY*2);
+  }
+  ctx.fill();
+
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+}
+
+function vertexExpr(a, h, k){
+  const aStr = a === 1 ? '' : a === -1 ? '−' : fmt(a, 2);
+  const mStr = h >= 0 ? `(x − ${fmt(h)})` : `(x + ${fmt(-h)})`;
+  const kStr = k >= 0 ? ` + ${fmt(k)}` : ` − ${fmt(-k)}`;
+  return `y = ${aStr}${mStr}²${kStr}`;
+}
+function rootExpr(a, r1, r2){
+  const aStr = a === 1 ? '' : a === -1 ? '−' : fmt(a, 2);
+  const t = v => v >= 0 ? `(x − ${fmt(v)})` : `(x + ${fmt(-v)})`;
+  return `y = ${aStr}${t(r1)}${t(r2)}`;
+}
+function generalExpr(A, B, C){
+  let str = 'y = ' + (A === 1 ? '' : A === -1 ? '−' : fmt(A, 2)) + 'x²';
+  if (B !== 0) str += (B > 0 ? ' + ' : ' − ') + (Math.abs(B) === 1 ? '' : fmt(Math.abs(B), 2)) + 'x';
+  if (C !== 0) str += (C > 0 ? ' + ' : ' − ') + fmt(Math.abs(C), 2);
+  return str;
+}
+
+function renderInfo(){
+  const m = state.model;
+  if (!m) return;
+  const { A, B, C, h, k, disc } = m;
+  const form = state.form;
+
+  let expr;
+  if (form === 'vertex'){
+    expr = vertexExpr(A, h, k);
+  } else if (form === 'root'){
+    if (disc >= -EPS){
+      const roots = getRootInfo(m);
+      expr = roots.length === 2
+        ? rootExpr(A, roots[0].v, roots[1].v)
+        : '（重根，交点式简并）';
+    } else {
+      expr = '（无实根，交点式不适用）';
+    }
+  } else {
+    expr = generalExpr(A, B, C);
+  }
+
+  let rootText;
+  const roots = getRootInfo(m);
+  if (disc > EPS){
+    if (exactMode){
+      rootText = `<span style="display:inline-flex; align-items:center; white-space:nowrap;">(${roots[0].h}, 0)、(${roots[1].h}, 0)</span>`;
+    } else {
+      rootText = `(${fmt(roots[0].v, 2)}, 0)、(${fmt(roots[1].v, 2)}, 0)`;
+    }
+  } else if (disc >= -EPS){
+    const val = exactMode ? roots[0].h : fmt(roots[0].v, 2);
+    rootText = `(${val}, 0)　与 x 轴相切`;
+  } else {
+    rootText = `没有交点（Δ = ${fmt(disc, 2)} &lt; 0）`;
+  }
+
+  const isV = form === 'vertex';
+  const isR = form === 'root' && disc >= -EPS;
+
+  const rows = [
+    `<div class="info-row"><span>解析式</span><b>${expr}</b></div>`,
+    `<div class="info-row"><span>开口方向</span><b>${A > 0 ? '向上 ↑' : '向下 ↓'}</b></div>`,
+    `<div class="info-row"><span>对称轴</span><b>直线 x = ${fmt(h)}</b></div>`,
+    `<div class="info-row ${isV ? 'hl' : ''}"><span>顶点坐标</span><b>(${fmt(h)}, ${fmt(k)})${isV ? '　← 顶点式顶点' : ''}</b></div>`,
+    `<div class="info-row ${isR ? 'hl-red' : ''}"><span>与 x 轴交点</span><b>${rootText}</b></div>`,
+    `<div class="info-row"><span>与 y 轴交点</span><b>(0, ${fmt(C)})</b></div>`,
+    `<div class="info-row"><span>判别式 Δ</span><b>${fmt(disc, 2)}</b></div>`
+  ];
+  document.getElementById('info').innerHTML = rows.join('');
+}
+
+/* ========== 二次函数：平移演示 ========== */
+function computeTranslationView(a, m, k){
+  const A = a, B = -2 * a * m, C = a * m * m + k;
+  const w = computeWindow(A, B, C);
+  let xmin = Math.min(w.xmin, 0), xmax = Math.max(w.xmax, 0);
+  const padX = (xmax - xmin) * 0.08;
+  xmin -= padX; xmax += padX;
+
+  let ymin = Infinity, ymax = -Infinity;
+  const N = 200;
+  for (let i = 0; i <= N; i++){
+    const x = xmin + (xmax - xmin) * i / N;
+    const y1 = a * x * x;
+    const y2 = a * x * x + B * x + C;
+    ymin = Math.min(ymin, y1, y2);
+    ymax = Math.max(ymax, y1, y2);
+  }
+  ymin = Math.min(ymin, 0, k);
+  ymax = Math.max(ymax, 0, k);
+  const padY = Math.max((ymax - ymin) * 0.12, 0.5);
+  ymin -= padY; ymax += padY;
+  return { xmin, xmax, ymin, ymax };
+}
+
+function startTranslation(){
+  const model = state.model;
+  if (!model){ toast('请先生成图像'); return; }
+  if (state.form !== 'vertex'){ toast('平移演示仅用于顶点式'); return; }
+
+  const a = model.A, m = model.h, k = model.k;
+
+  const vw = computeTranslationView(a, m, k);
+  const { W, H } = getCanvasSize();
+  const PAD = 55;
+  const availW = Math.max(60, W - PAD * 2);
+  const availH = Math.max(60, H - PAD * 2);
+  let sc = Math.min(availW / (vw.xmax - vw.xmin), availH / (vw.ymax - vw.ymin));
+  if (!isFinite(sc) || sc <= 0) sc = 40;
+  view.scale = sc;
+  view.cx = (vw.xmin + vw.xmax) / 2;
+  view.cy = (vw.ymin + vw.ymax) / 2;
+
+  translationAnim = {
+    a, m, k,
+    hx: 0, hy: 0,
+    t0: performance.now(),
+    duration: 3200,
+    phase1End: 0.44,
+    phase2End: 0.9
+  };
+  requestAnimationFrame(animLoop);
+}
+
+function animLoop(now){
+  const ta = translationAnim;
+  if (!ta) return;
+  const t = Math.min(1, (now - ta.t0) / ta.duration);
+
+  if (t < ta.phase1End){
+    const u = easeInOut(t / ta.phase1End);
+    ta.hx = ta.m * u;
+    ta.hy = 0;
+  } else if (t < ta.phase2End){
+    const u = easeInOut((t - ta.phase1End) / (ta.phase2End - ta.phase1End));
+    ta.hx = ta.m;
+    ta.hy = ta.k * u;
+  } else {
+    ta.hx = ta.m;
+    ta.hy = ta.k;
+  }
+
+  drawTranslationFrame();
+
+  if (t < 1){
+    requestAnimationFrame(animLoop);
+  } else {
+    translationAnim = null;
+    drawScene();
+    renderInfo();
+  }
+}
+
+function drawTranslationFrame(){
+  const ta = translationAnim;
+  if (!ta) return;
+  const { ctx, W, H } = prepareCanvas(cv);
+  if (W <= 0 || H <= 0) return;
+
+  const layer = document.getElementById('canvas-html-layer');
+  if (layer) layer.innerHTML = '';
+
+  const a = ta.a;
+
+  drawGridAndAxes(ctx, W, H);
+
+  const startModel = computeModel(a, 0, 0);
+  drawParabolaPath(ctx, startModel, 'rgba(148,163,184,0.9)', 2, [7, 6]);
+
+  const endModel = computeModel(a, -2 * a * ta.m, a * ta.m * ta.m + ta.k);
+  if (ta.hx !== ta.m || ta.hy !== ta.k){
+    drawParabolaPath(ctx, endModel, 'rgba(37,99,235,0.28)', 2, [5, 5]);
+  }
+
+  const cur = computeModel(a, -2 * a * ta.hx, a * ta.hx * ta.hx + ta.hy);
+  drawParabolaPath(ctx, cur, '#2563eb', 3, null);
+
+  const ax = worldToScreen(ta.hx, 0).x;
+  if (ax > 0 && ax < W){
+    ctx.save();
+    ctx.setLineDash([7, 7]);
+    ctx.strokeStyle = 'rgba(168,85,247,0.75)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(ax, 8); ctx.lineTo(ax, H - 8); ctx.stroke();
+    ctx.restore();
+  }
+
+  const vp = worldToScreen(ta.hx, ta.hy);
+  dot(ctx, vp.x, vp.y, '#f59e0b', 8);
+  ctx.beginPath();
+  ctx.arc(vp.x, vp.y, 12, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(245,158,11,0.4)';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  drawLabel(ctx, `顶点 (${fmt(ta.hx)}, ${fmt(ta.hy)})`, vp.x, vp.y, '#b45309', 0, -20, W, H, 'center');
+
+  if (ta.hx !== 0 || ta.hy !== 0){
+    const sp = worldToScreen(0, 0);
+    dot(ctx, sp.x, sp.y, 'rgba(148,163,184,0.9)', 4.5);
+  }
+
+  let tip = '';
+  if (ta.hx !== ta.m) tip = `沿 x 轴平移：${ta.m >= 0 ? '向右' : '向左'} ${fmt(Math.abs(ta.m))} 个单位`;
+  else if (ta.hy !== ta.k) tip = `沿 y 轴平移：${ta.k >= 0 ? '向上' : '向下'} ${fmt(Math.abs(ta.k))} 个单位`;
+  else tip = `平移完成：y = ${fmt(a,2)}(x − ${fmt(ta.m)})² ${ta.k >= 0 ? '+' : '−'} ${fmt(Math.abs(ta.k))}`;
+
+  ctx.font = '600 14px ui-sans-serif, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const tw = ctx.measureText(tip).width;
+  ctx.fillStyle = 'rgba(15,23,42,0.06)';
+  ctx.beginPath();
+  const bx = W / 2 - tw / 2 - 16, by = H - 46, bw = tw + 32, bh = 34;
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 10); else ctx.rect(bx, by, bw, bh);
+  ctx.fill();
+  ctx.fillStyle = '#334155';
+  ctx.fillText(tip, W / 2, H - 38);
+}
+
+/* ========== 二次函数：拖动/缩放 ========== */
+const activePointers = new Map();
+let interaction = { mode: 'none' };
+
+function hitTest(sx, sy){
+  const m = state.model;
+  if (!m) return null;
+  const vp = worldToScreen(m.h, m.k);
+  let best = null, bestDist = 24;
+
+  const dv = Math.hypot(sx - vp.x, sy - vp.y);
+  if (dv < bestDist){ best = { type: 'vertex' }; bestDist = dv; }
+
+  if (m.disc > 1e-9){
+    const roots = getRootInfo(m);
+    roots.forEach((r, idx) => {
+      const p = worldToScreen(r.v, 0);
+      const d = Math.hypot(sx - p.x, sy - p.y);
+      if (d < bestDist){ best = { type: 'root', index: idx }; bestDist = d; }
+    });
+  }
+  return best;
+}
+
+function finishDrag(){
+  if (interaction.mode !== 'drag') return;
+  updateInputsFromModel();
+  interaction.mode = 'none';
+  cv.style.cursor = 'default';
+  renderInfo();
+  drawScene();
+}
+
+function updateInputsFromModel(){
+  const m = state.model;
+  if (!m) return;
+  const setVal = (id, v) => { document.getElementById(id).value = formatInputNumber(v); };
+
+  if (state.form === 'vertex'){
+    setVal('v-a', m.A);
+    setVal('v-m', m.h);
+    setVal('v-k', m.k);
+  } else if (state.form === 'root'){
+    if (m.disc < -EPS){
+      setForm('general');
+      setVal('g-a', m.A);
+      setVal('g-b', m.B);
+      setVal('g-c', m.C);
+      toast('交点式无法表示无实根，已切换到一般式');
+    } else {
+      const roots = getRootInfo(m);
+      setVal('r-a', m.A);
+      setVal('r-x1', roots[0].v);
+      setVal('r-x2', roots.length > 1 ? roots[1].v : roots[0].v);
+    }
+  } else {
+    setVal('g-a', m.A);
+    setVal('g-b', m.B);
+    setVal('g-c', m.C);
+  }
+}
+
+cv.addEventListener('pointerdown', e => {
+  if (!state.model) return;
+  if (translationAnim){ translationAnim = null; }
+  const rect = cv.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  activePointers.set(e.pointerId, { x: sx, y: sy });
+  cv.setPointerCapture(e.pointerId);
+
+  if (activePointers.size === 2){
+    if (interaction.mode === 'drag') finishDrag();
+    interaction.mode = 'pinch';
+    const pts = Array.from(activePointers.values());
+    interaction.startDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    interaction.startScale = view.scale;
+    interaction.startMidScreen = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+    interaction.startWorldMid = screenToWorld(interaction.startMidScreen.x, interaction.startMidScreen.y);
+    return;
+  }
+
+  if (activePointers.size === 1){
+    const hit = hitTest(sx, sy);
+    if (hit){
+      interaction.mode = 'drag';
+      interaction.dragType = hit.type;
+      interaction.dragIndex = hit.index;
+      if (hit.type === 'root'){
+        const roots = getRootInfo(state.model);
+        interaction.otherRoot = roots[1 - hit.index].v;
+      } else {
+        interaction.vertexA = state.model.A;
+        interaction.vertexH = state.model.h;
+      }
+      cv.style.cursor = 'grabbing';
+    } else {
+      interaction.mode = 'pan';
+      interaction.startPan = { x: sx, y: sy, cx: view.cx, cy: view.cy };
+      cv.style.cursor = 'grabbing';
+    }
+  }
+});
+
+cv.addEventListener('pointermove', e => {
+  const rect = cv.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+
+  if (!activePointers.has(e.pointerId)){
+    if (state.model && !translationAnim){
+      const hit = hitTest(sx, sy);
+      cv.style.cursor = hit ? 'grab' : 'default';
+    }
+    return;
+  }
+
+  activePointers.set(e.pointerId, { x: sx, y: sy });
+
+  if (interaction.mode === 'pinch' && activePointers.size >= 2){
+    const pts = Array.from(activePointers.values());
+    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    if (interaction.startDist < 1e-6) return;
+    let newScale = interaction.startScale * (dist / interaction.startDist);
+    newScale = Math.min(1e6, Math.max(1e-4, newScale));
+    const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+    const { W, H } = getCanvasSize();
+    view.scale = newScale;
+    view.cx = interaction.startWorldMid.x - (mid.x - W / 2) / view.scale;
+    view.cy = interaction.startWorldMid.y - (H / 2 - mid.y) / view.scale;
+    drawScene();
+    return;
+  }
+
+  if (interaction.mode === 'drag'){
+    const w = screenToWorld(sx, sy);
+    if (interaction.dragType === 'vertex'){
+      const a = interaction.vertexA, h = interaction.vertexH;
+      state.model = computeModel(a, -2 * a * h, a * h * h + w.y);
+      state.model.h = h;
+      state.model.k = w.y;
+    } else if (interaction.dragType === 'root'){
+      const a = state.model.A;
+      state.model = computeModel(a, -a * (w.x + interaction.otherRoot), a * w.x * interaction.otherRoot);
+    }
+    renderInfo();
+    drawScene();
+    return;
+  }
+
+  if (interaction.mode === 'pan'){
+    const dx = sx - interaction.startPan.x;
+    const dy = sy - interaction.startPan.y;
+    view.cx = interaction.startPan.cx - dx / view.scale;
+    view.cy = interaction.startPan.cy + dy / view.scale;
+    drawScene();
+  }
+});
+
+function handlePointerUp(e){
+  activePointers.delete(e.pointerId);
+  if (cv.hasPointerCapture(e.pointerId)) cv.releasePointerCapture(e.pointerId);
+
+  if (interaction.mode === 'pinch'){
+    if (activePointers.size < 2){
+      interaction.mode = 'none';
+      cv.style.cursor = 'default';
+    }
+  } else if (interaction.mode === 'drag'){
+    finishDrag();
+  } else if (interaction.mode === 'pan'){
+    interaction.mode = 'none';
+    cv.style.cursor = 'default';
+  }
+}
+cv.addEventListener('pointerup', handlePointerUp);
+cv.addEventListener('pointercancel', handlePointerUp);
+
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (!state.model) return;
+  if (translationAnim){ translationAnim = null; }
+  const rect = cv.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const factor = Math.exp(-e.deltaY * 0.0015);
+  const w = screenToWorld(mx, my);
+  let newScale = view.scale * factor;
+  newScale = Math.min(1e6, Math.max(1e-4, newScale));
+  view.scale = newScale;
+  const { W, H } = getCanvasSize();
+  view.cx = w.x - (mx - W / 2) / view.scale;
+  view.cy = w.y - (H / 2 - my) / view.scale;
+  drawScene();
+}, { passive: false });
+
+/* =========================================================
+   圆页面通用
+   ========================================================= */
+const CIRCLE_R = 3;
+
+function circleView(canvas){
+  const W = canvas.clientWidth || 640;
+  const H = canvas.clientHeight || 420;
+  const scale = Math.min(W, H) / 11;
+  return {
+    W, H, scale,
+    cx: W / 2, cy: H / 2,
+    toScreen: (x, y) => ({ x: W / 2 + x * scale, y: H / 2 - y * scale }),
+    toWorld: (sx, sy) => ({ x: (sx - W / 2) / scale, y: (H / 2 - sy) / scale })
+  };
+}
+
+function drawCircleGrid(ctx, W, H, view){
+  const { toScreen, scale } = view;
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#f1f5f9';
+  ctx.beginPath();
+  const half = Math.ceil(Math.max(W, H) / scale / 2) + 1;
+  for (let i = -half; i <= half; i++){
+    const p = toScreen(i, 0);
+    if (p.x >= 0 && p.x <= W){
+      ctx.moveTo(Math.round(p.x) + 0.5, 0);
+      ctx.lineTo(Math.round(p.x) + 0.5, H);
+    }
+    const q = toScreen(0, i);
+    if (q.y >= 0 && q.y <= H){
+      ctx.moveTo(0, Math.round(q.y) + 0.5);
+      ctx.lineTo(W, Math.round(q.y) + 0.5);
+    }
+  }
+  ctx.stroke();
+
+  const origin = toScreen(0, 0);
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, origin.y); ctx.lineTo(W, origin.y);
+  ctx.moveTo(origin.x, 0); ctx.lineTo(origin.x, H);
+  ctx.stroke();
+
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = 'italic 600 14px Georgia, serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('x', W - 18, origin.y - 6);
+  ctx.fillText('y', origin.x + 6, 16);
+}
+
+/* =========================================================
+   点与圆
+   ========================================================= */
+const pc = {
+  points: [],
+  dragIndex: -1
+};
+const PC_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+
+const cvPointCircle = document.getElementById('cv-point-circle');
+
+function drawPointCircleScene(){
+  const view = circleView(cvPointCircle);
+  const { ctx, W, H } = prepareCanvas(cvPointCircle);
+  if (W <= 0 || H <= 0) return;
+  const { toScreen, scale } = view;
+
+  drawCircleGrid(ctx, W, H, view);
+
+  // 圆
+  const c = toScreen(0, 0);
+  const pr = CIRCLE_R * scale;
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, pr, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(14,165,233,0.07)';
+  ctx.fill();
+  ctx.strokeStyle = '#0ea5e9';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  dot(ctx, c.x, c.y, '#0ea5e9', 4.5);
+  drawLabel(ctx, 'O', c.x, c.y, '#0284c7', -12, -12, W, H, 'right');
+
+  // 各点
+  pc.points.forEach((p, i) => {
+    const sp = toScreen(p.x, p.y);
+    const d = Math.hypot(p.x, p.y);
+    let stateText, color = p.color;
+    if (Math.abs(d - CIRCLE_R) < 0.02) stateText = '圆上';
+    else if (d < CIRCLE_R) stateText = '圆内';
+    else stateText = '圆外';
+
+    // 连线
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.65;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.y);
+    ctx.lineTo(sp.x, sp.y);
+    ctx.stroke();
+    ctx.restore();
+
+    // 距离标签
+    const mx = (c.x + sp.x) / 2;
+    const my = (c.y + sp.y) / 2;
+    drawLabel(ctx, `d=${fmt(d, 2)}`, mx, my, color, 0, -10, W, H, 'center');
+
+    // 点
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, i === pc.dragIndex ? 9 : 7, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    drawLabel(ctx, `P${i + 1}`, sp.x, sp.y, color, 0, 20, W, H, 'center');
+
+    // 状态
+    ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = color;
+    ctx.fillText(stateText, sp.x, sp.y + 34);
+  });
+
+  // 半径参考
+  ctx.save();
+  ctx.setLineDash([3, 4]);
+  ctx.strokeStyle = 'rgba(14,165,233,0.4)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(c.x, c.y);
+  ctx.lineTo(c.x + pr, c.y);
+  ctx.stroke();
+  ctx.restore();
+  drawLabel(ctx, `r = ${CIRCLE_R}`, c.x + pr / 2, c.y, '#0284c7', 0, -10, W, H, 'center');
+}
+
+function updatePointCircleInfo(){
+  const list = document.getElementById('pc-list');
+  if (pc.points.length === 0){
+    list.innerHTML = '<div class="pc-item" style="color:#94a3b8;">点击画布添加点</div>';
+    return;
+  }
+  list.innerHTML = pc.points.map((p, i) => {
+    const d = Math.hypot(p.x, p.y);
+    let rel, cls;
+    if (Math.abs(d - CIRCLE_R) < 0.02){ rel = '圆上'; cls = 'hl'; }
+    else if (d < CIRCLE_R){ rel = '圆内'; cls = 'hl-blue'; }
+    else { rel = '圆外'; cls = 'hl-red'; }
+    return `<div class="pc-item">
+      <span class="pc-dot" style="background:${p.color}"></span>
+      P${i + 1} (${fmt(p.x, 2)}, ${fmt(p.y, 2)}) · d=${fmt(d, 2)} · ${rel}
+    </div>`;
+  }).join('');
+}
+
+cvPointCircle.addEventListener('pointerdown', e => {
+  const rect = cvPointCircle.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvPointCircle);
+  const w = view.toWorld(sx, sy);
+
+  // 命中检测
+  let hitIndex = -1;
+  let bestDist = 20;
+  pc.points.forEach((p, i) => {
+    const sp = view.toScreen(p.x, p.y);
+    const d = Math.hypot(sx - sp.x, sy - sp.y);
+    if (d < bestDist){ hitIndex = i; bestDist = d; }
+  });
+
+  if (hitIndex >= 0){
+    pc.dragIndex = hitIndex;
+    cvPointCircle.setPointerCapture(e.pointerId);
+    cvPointCircle.style.cursor = 'grabbing';
+  } else {
+    // 添加新点
+    const color = PC_COLORS[pc.points.length % PC_COLORS.length];
+    pc.points.push({ x: w.x, y: w.y, color });
+    updatePointCircleInfo();
+    drawPointCircleScene();
+  }
+});
+
+cvPointCircle.addEventListener('pointermove', e => {
+  if (pc.dragIndex < 0) return;
+  const rect = cvPointCircle.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvPointCircle);
+  let w = view.toWorld(sx, sy);
+
+  // 吸附
+  const d = Math.hypot(w.x, w.y);
+  if (Math.abs(d - CIRCLE_R) < 0.25 && d > 1e-6){
+    const ang = Math.atan2(w.y, w.x);
+    w = { x: CIRCLE_R * Math.cos(ang), y: CIRCLE_R * Math.sin(ang) };
+  }
+
+  pc.points[pc.dragIndex].x = w.x;
+  pc.points[pc.dragIndex].y = w.y;
+  updatePointCircleInfo();
+  drawPointCircleScene();
+});
+
+function pcPointerUp(e){
+  if (pc.dragIndex >= 0){
+    pc.dragIndex = -1;
+    cvPointCircle.style.cursor = 'default';
+    updatePointCircleInfo();
+    drawPointCircleScene();
+  }
+  if (cvPointCircle.hasPointerCapture(e.pointerId)) cvPointCircle.releasePointerCapture(e.pointerId);
+}
+cvPointCircle.addEventListener('pointerup', pcPointerUp);
+cvPointCircle.addEventListener('pointercancel', pcPointerUp);
+
+document.getElementById('pcClearBtn').addEventListener('click', () => {
+  pc.points = [];
+  pc.dragIndex = -1;
+  updatePointCircleInfo();
+  drawPointCircleScene();
+});
+
+/* =========================================================
+   过点作圆
+   ========================================================= */
+const mc = {
+  mode: 'one',
+  fixedPoints: [], // 固定点，除非清空，否则一直存在
+  circles: [], // 生成的圆（可包含多个）
+  drag: null
+};
+
+const cvMakeCircle = document.getElementById('cv-make-circle');
+
+const MC_TIPS = {
+  one: '先点击一个定点，之后点击任意位置作为圆心，生成多个过该点的圆。',
+  two: '依次点击两个不重合的定点，之后在中垂线上点击作圆心，生成多个过这两点的圆。',
+  three: '依次点击三个不共线的点，系统自动作出唯一确定的圆。'
+};
+
+function updateMakeCircleInfo(){
+  document.getElementById('mc-tip').textContent = MC_TIPS[mc.mode];
+  const box = document.getElementById('mc-info');
+  const rows = [];
+  const maxP = mc.mode === 'one' ? 1 : (mc.mode === 'two' ? 2 : 3);
+  rows.push(`<div class="info-row"><span>已生成圆</span><b>${mc.circles.length} 个</b></div>`);
+  rows.push(`<div class="info-row"><span>已选定点</span><b>${mc.fixedPoints.length} / ${maxP} 个</b></div>`);
+  box.innerHTML = rows.join('');
+}
+
+function drawMakeCircleScene(){
+  const view = circleView(cvMakeCircle);
+  const { ctx, W, H } = prepareCanvas(cvMakeCircle);
+  if (W <= 0 || H <= 0) return;
+  const { toScreen, scale } = view;
+
+  drawCircleGrid(ctx, W, H, view);
+
+  // 绘制所有已生成的圆
+  mc.circles.forEach(c => {
+    if (c.center && c.r != null && c.r > 0){
+      const sp = toScreen(c.center.x, c.center.y);
+      const pr = c.r * scale;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, pr, 0, Math.PI * 2);
+      ctx.fillStyle = c.color.light;
+      ctx.fill();
+      ctx.strokeStyle = c.color.css;
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      // 半径虚线
+      mc.fixedPoints.forEach(p => {
+        const pp = toScreen(p.x, p.y);
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = c.color.css;
+        ctx.globalAlpha = 0.5;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(sp.x, sp.y);
+        ctx.lineTo(pp.x, pp.y);
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // 圆心
+      dot(ctx, sp.x, sp.y, c.color.css, 5.5);
+      drawLabel(ctx, `圆心(${fmt(c.center.x, 2)},${fmt(c.center.y, 2)})`, sp.x, sp.y, c.color.css, 0, -16, W, H, 'center');
+      if (mc.fixedPoints.length > 0) {
+        const p0 = toScreen(mc.fixedPoints[0].x, mc.fixedPoints[0].y);
+        drawLabel(ctx, `r=${fmt(c.r, 2)}`, (sp.x + p0.x) / 2, (sp.y + p0.y) / 2, c.color.css, 0, -10, W, H, 'center');
+      }
+    }
+  });
+
+  // 两点模式中垂线
+  if (mc.mode === 'two' && mc.fixedPoints.length === 2) {
+    const A = mc.fixedPoints[0], B = mc.fixedPoints[1];
+    const M = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+    const dx = B.x - A.x, dy = B.y - A.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const n = { x: -dy / len, y: dx / len };
+    const big = 1000 / scale;
+    const p1 = toScreen(M.x - n.x * big, M.y - n.y * big);
+    const p2 = toScreen(M.x + n.x * big, M.y + n.y * big);
+    ctx.save();
+    ctx.setLineDash([8, 6]);
+    ctx.strokeStyle = '#a855f7';
+    ctx.globalAlpha = 0.75;
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+    ctx.restore();
+    const mp = toScreen(M.x, M.y);
+    drawLabel(ctx, '中垂线', mp.x, mp.y, '#a855f7', 0, -14, W, H, 'center');
+    // AB 线段
+    const a = toScreen(A.x, A.y), b = toScreen(B.x, B.y);
+    ctx.save();
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.restore();
+  }
+
+  // 绘制固定点
+  mc.fixedPoints.forEach((p, i) => {
+    const sp = toScreen(p.x, p.y);
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#2563eb';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    drawLabel(ctx, `P${i + 1}`, sp.x, sp.y, '#1d4ed8', 0, 20, W, H, 'center');
+  });
+
+  // 提示
+  const maxP = mc.mode === 'one' ? 1 : (mc.mode === 'two' ? 2 : 3);
+  let hint = '';
+  if (mc.fixedPoints.length < maxP) {
+    hint = `点击选择第 ${mc.fixedPoints.length + 1} 个定点`;
+  } else if (mc.mode === 'three' && mc.circles.length > 0) {
+    hint = '三点确定一个圆。可拖动点或清空重试';
+  } else {
+    if (mc.mode === 'one') hint = '点击画布任意位置作为圆心，可生成多个圆';
+    if (mc.mode === 'two') hint = '在中垂线上点击作为圆心，可生成多个圆';
+  }
+
+  if (hint){
+    ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const tw = ctx.measureText(hint).width;
+    ctx.fillStyle = 'rgba(15,23,42,0.06)';
+    ctx.beginPath();
+    const bx = W / 2 - tw / 2 - 16, by = H - 46;
+    if (ctx.roundRect) ctx.roundRect(bx, by, tw + 32, 34, 10); else ctx.rect(bx, by, tw + 32, 34);
+    ctx.fill();
+    ctx.fillStyle = '#475569';
+    ctx.fillText(hint, W / 2, H - 38);
+  }
+}
+
+function projectOnPerpBisector(A, B, Q){
+  const M = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+  const dx = B.x - A.x, dy = B.y - A.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const n = { x: -dy / len, y: dx / len };
+  const t = (Q.x - M.x) * n.x + (Q.y - M.y) * n.y;
+  return { x: M.x + t * n.x, y: M.y + t * n.y };
+}
+
+function circumcircle(p1, p2, p3){
+  const ax = p1.x, ay = p1.y, bx = p2.x, by = p2.y, cx = p3.x, cy = p3.y;
+  const d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+  if (Math.abs(d) < 1e-9) return null;
+  const ux = ((ax*ax + ay*ay) * (by - cy) + (bx*bx + by*by) * (cy - ay) + (cx*cx + cy*cy) * (ay - by)) / d;
+  const uy = ((ax*ax + ay*ay) * (cx - bx) + (bx*bx + by*by) * (ax - cx) + (cx*cx + cy*cy) * (bx - ax)) / d;
+  return { x: ux, y: uy };
+}
+
+cvMakeCircle.addEventListener('pointerdown', e => {
+  const rect = cvMakeCircle.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvMakeCircle);
+  const w = view.toWorld(sx, sy);
+
+  // 先检测拖动
+  let hit = null;
+  let bestDist = 18;
+  for (let i = mc.circles.length - 1; i >= 0; i--){
+    const c = mc.circles[i];
+    if (c.center && mc.mode !== 'three') { // 三点模式不能拖圆心
+      const sp = view.toScreen(c.center.x, c.center.y);
+      const d = Math.hypot(sx - sp.x, sy - sp.y);
+      if (d < bestDist){ hit = { circle: c, type: 'center' }; bestDist = d; }
+    }
+  }
+  mc.fixedPoints.forEach((p, idx) => {
+    const sp = view.toScreen(p.x, p.y);
+    const d = Math.hypot(sx - sp.x, sy - sp.y);
+    if (d < bestDist){ hit = { type: 'point', index: idx }; bestDist = d; }
+  });
+
+  if (hit){
+    mc.drag = hit;
+    cvMakeCircle.setPointerCapture(e.pointerId);
+    cvMakeCircle.style.cursor = 'grabbing';
+    return;
+  }
+
+  // 处理点击添加
+  const maxPoints = mc.mode === 'one' ? 1 : (mc.mode === 'two' ? 2 : 3);
+
+  // 如果点还没选满，优先选点
+  if (mc.fixedPoints.length < maxPoints) {
+    for (const p of mc.fixedPoints) {
+      if (Math.hypot(w.x - p.x, w.y - p.y) < 0.15) {
+        toast('点不能重合'); return;
+      }
+    }
+    mc.fixedPoints.push(w);
+    
+    // 如果是三点模式并且刚好选满3个点，直接生成唯一的圆
+    if (mc.mode === 'three' && mc.fixedPoints.length === 3) {
+      const center = circumcircle(mc.fixedPoints[0], mc.fixedPoints[1], mc.fixedPoints[2]);
+      if (!center) {
+        toast('三点共线，无法确定一个圆');
+        mc.fixedPoints.pop();
+      } else {
+        const r = Math.hypot(center.x - mc.fixedPoints[0].x, center.y - mc.fixedPoints[0].y);
+        mc.circles.push({ center, r, color: randomRGB() });
+      }
+    }
+  } 
+  else {
+    // 点已经选满，如果是三点模式，提示清空
+    if (mc.mode === 'three') {
+      toast('三点确定一个圆，请先清空画布再重新选点');
+      return;
+    }
+
+    // 一点或两点模式，点击添加新圆
+    if (mc.mode === 'one') {
+      const p = mc.fixedPoints[0];
+      if (Math.hypot(w.x - p.x, w.y - p.y) < 0.15) {
+        toast('圆心不能与已知点重合'); return;
+      }
+      const r = Math.hypot(w.x - p.x, w.y - p.y);
+      mc.circles.push({ center: w, r, color: randomRGB() });
+    } 
+    else if (mc.mode === 'two') {
+      const A = mc.fixedPoints[0], B = mc.fixedPoints[1];
+      if (Math.hypot(A.x - B.x, A.y - B.y) < 0.1) {
+        toast('两点太近，无法确定中垂线'); return;
+      }
+      const center = projectOnPerpBisector(A, B, w);
+      const r = Math.hypot(center.x - A.x, center.y - A.y);
+      mc.circles.push({ center, r, color: randomRGB() });
+    }
+  }
+
+  updateMakeCircleInfo();
+  drawMakeCircleScene();
+});
+
+cvMakeCircle.addEventListener('pointermove', e => {
+  if (!mc.drag) return;
+  const rect = cvMakeCircle.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvMakeCircle);
+  let w = view.toWorld(sx, sy);
+
+  if (mc.drag.type === 'point') {
+    const idx = mc.drag.index;
+    mc.fixedPoints[idx] = w;
+
+    // 更新所有相关圆
+    if (mc.mode === 'one') {
+      // 圆心不变，半径变化
+      const A = mc.fixedPoints[0];
+      mc.circles.forEach(c => {
+        c.r = Math.hypot(c.center.x - A.x, c.center.y - A.y);
+      });
+    } 
+    else if (mc.mode === 'two') {
+      const A = mc.fixedPoints[0], B = mc.fixedPoints[1];
+      if (Math.hypot(A.x - B.x, A.y - B.y) < 0.1) return; // 忽略无效状态
+      mc.circles.forEach(c => {
+        c.center = projectOnPerpBisector(A, B, c.center);
+        c.r = Math.hypot(c.center.x - A.x, c.center.y - A.y);
+      });
+    } 
+    else if (mc.mode === 'three' && mc.fixedPoints.length === 3) {
+      const center = circumcircle(mc.fixedPoints[0], mc.fixedPoints[1], mc.fixedPoints[2]);
+      if (center) {
+        mc.circles[0].center = center;
+        mc.circles[0].r = Math.hypot(center.x - mc.fixedPoints[0].x, center.y - mc.fixedPoints[0].y);
+      }
+    }
+  } 
+  else if (mc.drag.type === 'center') {
+    const c = mc.drag.circle;
+    if (mc.mode === 'one') {
+      const A = mc.fixedPoints[0];
+      if (Math.hypot(w.x - A.x, w.y - A.y) < 0.15) return; // 避免太近
+      c.center = w;
+      c.r = Math.hypot(w.x - A.x, w.y - A.y);
+    } 
+    else if (mc.mode === 'two') {
+      const A = mc.fixedPoints[0], B = mc.fixedPoints[1];
+      if (Math.hypot(A.x - B.x, A.y - B.y) < 0.1) return;
+      c.center = projectOnPerpBisector(A, B, w);
+      c.r = Math.hypot(c.center.x - A.x, c.center.y - A.y);
+    }
+  }
+
+  updateMakeCircleInfo();
+  drawMakeCircleScene();
+});
+
+function mcPointerUp(e){
+  if (mc.drag){
+    mc.drag = null;
+    cvMakeCircle.style.cursor = 'default';
+    updateMakeCircleInfo();
+    drawMakeCircleScene();
+  }
+  if (cvMakeCircle.hasPointerCapture(e.pointerId)) cvMakeCircle.releasePointerCapture(e.pointerId);
+}
+cvMakeCircle.addEventListener('pointerup', mcPointerUp);
+cvMakeCircle.addEventListener('pointercancel', mcPointerUp);
+
+document.getElementById('mcClearBtn').addEventListener('click', () => {
+  mc.circles = [];
+  mc.fixedPoints = [];
+  mc.drag = null;
+  updateMakeCircleInfo();
+  drawMakeCircleScene();
+});
+
+document.querySelectorAll('#screen-make-circle .subtab').forEach(t => {
+  t.addEventListener('click', () => {
+    mc.mode = t.dataset.mode;
+    document.querySelectorAll('#screen-make-circle .subtab').forEach(x => x.classList.toggle('active', x === t));
+    // 切换模式时清空画布
+    mc.circles = [];
+    mc.fixedPoints = [];
+    mc.drag = null;
+    updateMakeCircleInfo();
+    drawMakeCircleScene();
+  });
+});
+
+/* =========================================================
+   窗口尺寸变化
+   ========================================================= */
+let rafId = null;
+window.addEventListener('resize', () => {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(() => {
+    if (translationAnim) drawTranslationFrame();
+    else if (state.model && document.getElementById('screen-quad').classList.contains('active')) drawScene();
+    if (document.getElementById('screen-point-circle').classList.contains('active')) drawPointCircleScene();
+    if (document.getElementById('screen-make-circle').classList.contains('active')) drawMakeCircleScene();
+    if (document.getElementById('screen-central-angle').classList.contains('active')) drawCentralAngleScene();
+    if (document.getElementById('screen-circumferential-angle').classList.contains('active')) drawCircumAngleScene();
+    if (document.getElementById('screen-cyclic-quadrilateral').classList.contains('active')) drawCyclicQuadScene();
+    if (document.getElementById('screen-regular-polygon').classList.contains('active')) drawRegularPolyScene();
+    if (document.getElementById('screen-sector-area').classList.contains('active')) drawSectorAreaScene();
+  });
+});
+
+/* =========================================================
+   初始
+   ========================================================= */
+updatePointCircleInfo();
+updateMakeCircleInfo();
+/* =========================================================
+   圆心角、弦、弧、弦心距
+   ========================================================= */
+const ca = {
+  alpha: Math.PI / 3, // 蓝色圆心角
+  beta: Math.PI / 3,  // 黄色圆心角
+  rot: 0,             // 黄色扇形整体旋转量
+  dragTarget: null,   // 'B' (拖角度), 'rotate' (拖旋转)
+  dragStartAngle: 0,
+  dragStartRot: 0,
+  isAnimating: false,
+  animStartTime: 0,
+  animStartRot: 0,
+  animTargetRot: 0
+};
+
+const cvCentralAngle = document.getElementById('cv-central-angle');
+
+function initCA() {
+  // 随机生成 30~150 度
+  const deg = Math.floor(Math.random() * 121) + 30;
+  ca.alpha = deg * Math.PI / 180;
+  ca.beta = ca.alpha; // 保证完全相等
+  ca.rot = 0;
+  ca.dragTarget = null;
+  ca.isAnimating = false;
+  updateCaUI();
+  drawCentralAngleScene();
+}
+
+function updateCaUI() {
+  const isEqual = Math.abs(ca.alpha - ca.beta) < 1e-6;
+  
+  const setHighlight = (id, isEq) => {
+    const el = document.getElementById(id);
+    if (isEq) el.classList.add('equal-highlight');
+    else el.classList.remove('equal-highlight');
+  };
+
+  setHighlight('ca-row-angle', isEqual);
+  setHighlight('ca-row-chord', isEqual);
+  setHighlight('ca-row-dist', isEqual);
+  setHighlight('ca-row-arc', isEqual);
+
+  const rotBtn = document.getElementById('caRotateBtn');
+  if (isEqual && !ca.isAnimating) {
+    rotBtn.style.display = 'block';
+    if (Math.abs(ca.rot) > Math.PI / 2) {
+      rotBtn.textContent = '旋转回原位置';
+    } else {
+      rotBtn.textContent = '自动旋转重合';
+    }
+  } else {
+    rotBtn.style.display = 'none';
+  }
+}
+
+function drawCentralAngleScene() {
+  const view = circleView(cvCentralAngle);
+  const { ctx, W, H } = prepareCanvas(cvCentralAngle);
+  if (W <= 0 || H <= 0) return;
+  const { toScreen, scale } = view;
+
+  drawCircleGrid(ctx, W, H, view);
+
+  const R = 3;
+  const O = toScreen(0, 0);
+  const pr = R * scale;
+
+  // ====== 数学坐标计算 ======
+  // 蓝色扇 (右上角)
+  const A = { x: R, y: 0 };
+  const B = { x: R * Math.cos(ca.alpha), y: R * Math.sin(ca.alpha) };
+  
+  // 黄色扇 (左下角)，起点为左侧 PI，加上旋转量 rot
+  const cAngleMath = Math.PI + ca.rot; 
+  const dAngleMath = cAngleMath + ca.beta;
+  
+  const C = { x: R * Math.cos(cAngleMath), y: R * Math.sin(cAngleMath) };
+  const D = { x: R * Math.cos(dAngleMath), y: R * Math.sin(dAngleMath) };
+
+  const spA = toScreen(A.x, A.y);
+  const spB = toScreen(B.x, B.y);
+  const spC = toScreen(C.x, C.y);
+  const spD = toScreen(D.x, D.y);
+
+  const M = { x: (A.x + B.x)/2, y: (A.y + B.y)/2 };
+  const N = { x: (C.x + D.x)/2, y: (C.y + D.y)/2 };
+  const spM = toScreen(M.x, M.y);
+  const spN = toScreen(N.x, N.y);
+
+  // ====== Canvas 画弧角度 ======
+  // 在 Canvas 中，0在右，PI在左，画左下角意味着从 PI 增加到 PI+beta，且使用顺时针(false)
+  const arcStart = Math.PI - ca.beta - ca.rot;
+  const arcEnd = arcStart + ca.beta;
+
+  // 绘制参考圆
+  ctx.beginPath();
+  ctx.arc(O.x, O.y, pr, 0, Math.PI * 2);
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 绘制扇形1 (蓝色，右上角)
+  ctx.beginPath();
+  ctx.moveTo(O.x, O.y);
+  ctx.arc(O.x, O.y, pr, 0, -ca.alpha, true); 
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(37,99,235,0.15)';
+  ctx.fill();
+  ctx.strokeStyle = '#2563eb';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 绘制扇形2 (黄色，左下角)
+  ctx.beginPath();
+  ctx.moveTo(O.x, O.y);
+  ctx.arc(O.x, O.y, pr, arcStart, arcEnd, false); 
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(245,158,11,0.15)';
+  ctx.fill();
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 高亮弧
+  ctx.beginPath();
+  ctx.arc(O.x, O.y, pr, 0, -ca.alpha, true);
+  ctx.strokeStyle = '#2563eb';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(O.x, O.y, pr, arcStart, arcEnd, false);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // 弦心距 (虚线)
+  ctx.save();
+  ctx.setLineDash([5, 5]);
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#2563eb';
+  ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(spM.x, spM.y); ctx.stroke();
+  ctx.strokeStyle = '#f59e0b';
+  ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(spN.x, spN.y); ctx.stroke();
+  ctx.restore();
+
+  // 弦 (实线)
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#2563eb';
+  ctx.beginPath(); ctx.moveTo(spA.x, spA.y); ctx.lineTo(spB.x, spB.y); ctx.stroke();
+  ctx.strokeStyle = '#f59e0b';
+  ctx.beginPath(); ctx.moveTo(spC.x, spC.y); ctx.lineTo(spD.x, spD.y); ctx.stroke();
+
+  // 圆心
+  dot(ctx, O.x, O.y, '#94a3b8', 4.5);
+  drawLabel(ctx, 'O', O.x, O.y, '#64748b', -12, -12, W, H, 'right');
+
+  // 绘制点
+  const drawP = (p, color, name, isDrag) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, isDrag ? 8 : 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawLabel(ctx, name, p.x, p.y, color, 0, isDrag ? 24 : -18, W, H, 'center');
+  };
+
+  drawP(spA, '#2563eb', 'A', false);
+  drawP(spB, '#2563eb', 'B', true);
+  drawP(spC, '#f59e0b', 'C', false);
+  drawP(spD, '#f59e0b', 'D', true);
+  
+  // 直角符号
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(spM.x - 2, spM.y - 2, 4, 4);
+  ctx.fillRect(spN.x - 2, spN.y - 2, 4, 4);
+
+  // 更新面板数据
+  const angle1 = ca.alpha * 180 / Math.PI;
+  const angle2 = ca.beta * 180 / Math.PI;
+  const chord1 = 2 * R * Math.sin(ca.alpha / 2);
+  const chord2 = 2 * R * Math.sin(ca.beta / 2);
+  const dist1 = R * Math.cos(ca.alpha / 2);
+  const dist2 = R * Math.cos(ca.beta / 2);
+
+  document.getElementById('ca-val-angle1').textContent = angle1.toFixed(1) + '°';
+  document.getElementById('ca-val-angle2').textContent = angle2.toFixed(1) + '°';
+  document.getElementById('ca-val-chord1').textContent = chord1.toFixed(2);
+  document.getElementById('ca-val-chord2').textContent = chord2.toFixed(2);
+  document.getElementById('ca-val-dist1').textContent = dist1.toFixed(2);
+  document.getElementById('ca-val-dist2').textContent = dist2.toFixed(2);
+}
+
+// 按钮事件
+document.getElementById('caResetBtn').addEventListener('click', initCA);
+document.getElementById('caRotateBtn').addEventListener('click', () => {
+  if (Math.abs(ca.alpha - ca.beta) < 1e-6 && !ca.isAnimating) {
+    ca.isAnimating = true;
+    ca.animStartTime = performance.now();
+    ca.animStartRot = ca.rot;
+    ca.animTargetRot = (Math.abs(ca.rot) < Math.PI / 2) ? Math.PI : 0;
+    requestAnimationFrame(caAnimLoop);
+  }
+});
+
+function caAnimLoop(now) {
+  if (!ca.isAnimating) return;
+  const duration = 1000;
+  let t = (now - ca.animStartTime) / duration;
+  if (t >= 1) t = 1;
+  const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  
+  ca.rot = ca.animStartRot + (ca.animTargetRot - ca.animStartRot) * ease;
+  drawCentralAngleScene();
+  
+  if (t < 1) {
+    requestAnimationFrame(caAnimLoop);
+  } else {
+    ca.isAnimating = false;
+    ca.rot = ca.animTargetRot;
+    updateCaUI();
+    drawCentralAngleScene();
+  }
+}
+
+// 交互事件
+cvCentralAngle.addEventListener('pointerdown', e => {
+  const rect = cvCentralAngle.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvCentralAngle);
+  const w = view.toWorld(sx, sy);
+  const R = 3;
+  const O = view.toScreen(0, 0);
+
+  // 1. 判断是否点中 B 点 (拖拽角度)
+  const B = view.toScreen(R * Math.cos(ca.alpha), R * Math.sin(ca.alpha));
+  if (Math.hypot(sx - B.x, sy - B.y) < 24) {
+    ca.dragTarget = 'B';
+    cvCentralAngle.setPointerCapture(e.pointerId);
+    cvCentralAngle.style.cursor = 'grabbing';
+    return;
+  }
+
+  // 2. 判断是否点中黄色扇形内部进行旋转
+  if (Math.abs(ca.alpha - ca.beta) < 1e-6 && !ca.isAnimating) {
+    // 使用 Canvas 屏幕角度判断
+    let mouseAngle = Math.atan2(sy - O.y, sx - O.x);
+    
+    let startAng = Math.PI - ca.beta - ca.rot;
+    let endAng = startAng + ca.beta;
+    
+    let testAng = mouseAngle;
+    if (testAng < startAng - Math.PI) testAng += 2 * Math.PI;
+    if (testAng > startAng + Math.PI) testAng -= 2 * Math.PI;
+
+    if (testAng >= startAng && testAng <= endAng && Math.hypot(w.x, w.y) < R) {
+      ca.dragTarget = 'rotate';
+      ca.dragStartAngle = mouseAngle;
+      ca.dragStartRot = ca.rot;
+      cvCentralAngle.setPointerCapture(e.pointerId);
+      cvCentralAngle.style.cursor = 'grabbing';
+    }
+  }
+});
+
+cvCentralAngle.addEventListener('pointermove', e => {
+  if (!ca.dragTarget || ca.isAnimating) return;
+  const rect = cvCentralAngle.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvCentralAngle);
+  const O = view.toScreen(0, 0);
+
+  if (ca.dragTarget === 'B') {
+    const w = view.toWorld(sx, sy);
+    ca.rot = 0; // 拖拽 B 点时，黄扇复位
+    
+    // 数学坐标中，第一象限角度为正
+    let angle = Math.atan2(w.y, w.x); 
+    if (angle < 0) angle += 2 * Math.PI;
+    
+    if (angle > 10 * Math.PI / 180 && angle < 170 * Math.PI / 180) {
+      ca.alpha = angle;
+    }
+    
+    // 5度以内吸附
+    if (Math.abs(ca.alpha - ca.beta) < 5 * Math.PI / 180) {
+      ca.alpha = ca.beta;
+    }
+    
+    updateCaUI();
+    drawCentralAngleScene();
+    return;
+  }
+
+  if (ca.dragTarget === 'rotate') {
+    // 直接使用 Canvas 屏幕角度
+    let mouseAngle = Math.atan2(sy - O.y, sx - O.x);
+    let delta = mouseAngle - ca.dragStartAngle;
+    
+    if (delta > Math.PI) delta -= 2 * Math.PI;
+    if (delta < -Math.PI) delta += 2 * Math.PI;
+    
+    ca.rot = ca.dragStartRot - delta;
+    drawCentralAngleScene();
+  }
+});
+
+function caPointerUp(e) {
+  if (ca.dragTarget) {
+    ca.dragTarget = null;
+    cvCentralAngle.style.cursor = 'default';
+    updateCaUI();
+    drawCentralAngleScene();
+  }
+  if (cvCentralAngle.hasPointerCapture(e.pointerId)) cvCentralAngle.releasePointerCapture(e.pointerId);
+}
+cvCentralAngle.addEventListener('pointerup', caPointerUp);
+cvCentralAngle.addEventListener('pointercancel', caPointerUp);
+
+// 页面加载时自动初始化
+setTimeout(() => {
+  initCA();
+}, 100);
+
+/* =========================================================
+   圆周角定理探究
+   ========================================================= */
+const circumAngle = {
+  mode: 'center',
+  aAng: 0.2,
+  bAng: 1.2,
+  pAng: 4.0,
+  p1Ang: 3.5,
+  p2Ang: 4.0,
+  dragTarget: null
+};
+
+const cvCircumAngle = document.getElementById('cv-circum-angle');
+
+const CIRCUM_TIPS = {
+  center: '拖动 A、B 或 P 点，观察圆周角 ∠APB 与圆心角 ∠AOB 的角度数量关系。',
+  diameter: '线段 AB 是圆的直径（过圆心）。拖动 P 点，观察 ∠APB 的角度。',
+  same: 'A、B 是固定的两点。拖动 P1、P2 点，观察它们对同一条弧 AB 的张角 ∠AP1B 与 ∠AP2B 的大小。'
+};
+
+const CIRCUM_THEOREMS = {
+  center: '<b>圆周角定理：</b>一条弧所对的圆周角等于它所对的圆心角的一半。',
+  diameter: '<b>推论 1：</b>半圆（或直径）所对的圆周角是直角（90°）。',
+  same: '<b>推论 2：</b>同弧或等弧所对的圆周角相等。'
+};
+
+document.querySelectorAll('#screen-circumferential-angle .subtab').forEach(t => {
+  t.addEventListener('click', () => {
+    circumAngle.mode = t.dataset.mode;
+    document.querySelectorAll('#screen-circumferential-angle .subtab').forEach(x => x.classList.toggle('active', x === t));
+    
+    // 切换模式时初始化点的位置
+    if (circumAngle.mode === 'center') {
+      circumAngle.aAng = 0.2;
+      circumAngle.bAng = 1.2;
+      circumAngle.pAng = 4.0;
+    } else if (circumAngle.mode === 'diameter') {
+      circumAngle.aAng = -0.8;
+      circumAngle.bAng = circumAngle.aAng + Math.PI; // B为A的对径点
+      circumAngle.pAng = 1.0;
+    } else if (circumAngle.mode === 'same') {
+      circumAngle.aAng = 0.2;
+      circumAngle.bAng = 1.2;
+      circumAngle.p1Ang = 3.5;
+      circumAngle.p2Ang = 4.0;
+    }
+    circumAngle.dragTarget = null;
+    drawCircumAngleScene();
+  });
+});
+
+function getAngleDeg(p1, p2, p3) {
+  // 计算角 p1 - p2(顶点) - p3
+  const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+  const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+  const dot = v1.x * v2.x + v1.y * v2.y;
+  const mag1 = Math.hypot(v1.x, v1.y);
+  const mag2 = Math.hypot(v2.x, v2.y);
+  if (mag1 === 0 || mag2 === 0) return 0;
+  let cos = dot / (mag1 * mag2);
+  cos = Math.max(-1, Math.min(1, cos));
+  return Math.acos(cos) * 180 / Math.PI;
+}
+
+function drawCircumAngleScene() {
+  const view = circleView(cvCircumAngle);
+  const { ctx, W, H } = prepareCanvas(cvCircumAngle);
+  if (W <= 0 || H <= 0) return;
+  const { toScreen, scale } = view;
+
+  drawCircleGrid(ctx, W, H, view);
+
+  const R = 3;
+  const O = toScreen(0, 0);
+  const pr = R * scale;
+  const R_math = R;
+
+  function getPt(ang) {
+    return { x: R_math * Math.cos(ang), y: R_math * Math.sin(ang) };
+  }
+
+  const A = getPt(circumAngle.aAng);
+  const B = getPt(circumAngle.bAng);
+  const spA = toScreen(A.x, A.y);
+  const spB = toScreen(B.x, B.y);
+
+  // 参考圆
+  ctx.beginPath();
+  ctx.arc(O.x, O.y, pr, 0, Math.PI * 2);
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 画点辅助函数
+  const drawP = (p, color, name, isDrag) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, isDrag ? 8 : 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawLabel(ctx, name, p.x, p.y, color, 0, isDrag ? 24 : -18, W, H, 'center');
+  };
+
+  // 画圆心角圆弧辅助函数
+  const drawArc = (startAng, endAng, color, dashed = false) => {
+    let s = startAng;
+    let e = endAng;
+    // 标准化角度，确保画出劣弧
+    while (e - s > Math.PI) e -= 2 * Math.PI;
+    while (e - s < -Math.PI) e += 2 * Math.PI;
+    
+    ctx.beginPath();
+    ctx.arc(O.x, O.y, pr, -s, -e, e > s); 
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    if (dashed) ctx.setLineDash([5, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  };
+
+  let infoHTML = '';
+
+  if (circumAngle.mode === 'center') {
+    const P = getPt(circumAngle.pAng);
+    const spP = toScreen(P.x, P.y);
+
+    // 高亮弧 AB
+    drawArc(circumAngle.aAng, circumAngle.bAng, 'rgba(245,158,11,0.4)', true);
+
+    // 圆心角连线
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(spA.x, spA.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(spB.x, spB.y); ctx.stroke();
+
+    // 圆周角连线
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(spP.x, spP.y); ctx.lineTo(spA.x, spA.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(spP.x, spP.y); ctx.lineTo(spB.x, spB.y); ctx.stroke();
+
+    // 计算并显示角度
+    let angleO = Math.abs(circumAngle.bAng - circumAngle.aAng);
+    if (angleO > Math.PI) angleO = 2 * Math.PI - angleO;
+    angleO = angleO * 180 / Math.PI;
+
+    const angleP = getAngleDeg(A, P, B);
+
+    drawP(spA, '#2563eb', 'A', true);
+    drawP(spB, '#2563eb', 'B', true);
+    drawP(spP, '#f59e0b', 'P', true);
+    dot(ctx, O.x, O.y, '#94a3b8', 4.5);
+    drawLabel(ctx, 'O', O.x, O.y, '#64748b', -12, -12, W, H, 'right');
+
+    infoHTML = `
+      <div class="info-row hl-blue"><span>圆心角 ∠AOB</span><b>${angleO.toFixed(1)}°</b></div>
+      <div class="info-row hl"><span>圆周角 ∠APB</span><b>${angleP.toFixed(1)}°</b></div>
+      <div class="info-row" style="background:#dcfce7;"><span>数量关系</span><b>∠APB = ½ ∠AOB</b></div>
+    `;
+  } 
+  else if (circumAngle.mode === 'diameter') {
+    const P = getPt(circumAngle.pAng);
+    const spP = toScreen(P.x, P.y);
+
+    // 直径连线
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(spA.x, spA.y); ctx.lineTo(spB.x, spB.y); ctx.stroke();
+
+    // 圆周角连线
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(spP.x, spP.y); ctx.lineTo(spA.x, spA.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(spP.x, spP.y); ctx.lineTo(spB.x, spB.y); ctx.stroke();
+
+    // 标直角
+    const pA = { x: spP.x - spA.x, y: spP.y - spA.y };
+    const pB = { x: spP.x - spB.x, y: spP.y - spB.y };
+    const lenA = Math.hypot(pA.x, pA.y);
+    const lenB = Math.hypot(pB.x, pB.y);
+    const uA = { x: pA.x / lenA * 15, y: pA.y / lenA * 15 };
+    const uB = { x: pB.x / lenB * 15, y: pB.y / lenB * 15 };
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(spP.x + uA.x, spP.y + uA.y);
+    ctx.lineTo(spP.x + uA.x + uB.x, spP.y + uA.y + uB.y);
+    ctx.lineTo(spP.x + uB.x, spP.y + uB.y);
+    ctx.stroke();
+
+    const angleP = getAngleDeg(A, P, B);
+
+    drawP(spA, '#2563eb', 'A', false);
+    drawP(spB, '#2563eb', 'B', false);
+    drawP(spP, '#f59e0b', 'P', true);
+    dot(ctx, O.x, O.y, '#94a3b8', 4.5);
+    drawLabel(ctx, 'O', O.x, O.y, '#64748b', -12, -12, W, H, 'right');
+
+    infoHTML = `
+      <div class="info-row hl-blue"><span>线段 AB</span><b>直径（过圆心）</b></div>
+      <div class="info-row hl"><span>圆周角 ∠APB</span><b>${angleP.toFixed(1)}°</b></div>
+      <div class="info-row" style="background:#dcfce7;"><span>结论</span><b>直径所对圆周角 = 90°</b></div>
+    `;
+  } 
+  else if (circumAngle.mode === 'same') {
+    const P1 = getPt(circumAngle.p1Ang);
+    const P2 = getPt(circumAngle.p2Ang);
+    const spP1 = toScreen(P1.x, P1.y);
+    const spP2 = toScreen(P2.x, P2.y);
+
+    // 高亮弧 AB
+    drawArc(circumAngle.aAng, circumAngle.bAng, 'rgba(245,158,11,0.4)', true);
+
+    // P1连线
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(spP1.x, spP1.y); ctx.lineTo(spA.x, spA.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(spP1.x, spP1.y); ctx.lineTo(spB.x, spB.y); ctx.stroke();
+
+    // P2连线
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(spP2.x, spP2.y); ctx.lineTo(spA.x, spA.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(spP2.x, spP2.y); ctx.lineTo(spB.x, spB.y); ctx.stroke();
+
+    const angleP1 = getAngleDeg(A, P1, B);
+    const angleP2 = getAngleDeg(A, P2, B);
+
+    drawP(spA, '#2563eb', 'A', true);
+    drawP(spB, '#2563eb', 'B', true);
+    drawP(spP1, '#10b981', 'P1', true);
+    drawP(spP2, '#8b5cf6', 'P2', true);
+
+    infoHTML = `
+      <div class="info-row hl-blue"><span>圆周角 ∠AP1B</span><b>${angleP1.toFixed(1)}°</b></div>
+      <div class="info-row hl"><span>圆周角 ∠AP2B</span><b>${angleP2.toFixed(1)}°</b></div>
+      <div class="info-row" style="background:#dcfce7;"><span>结论</span><b>∠AP1B = ∠AP2B</b></div>
+    `;
+  }
+
+  document.getElementById('circum-tip').textContent = CIRCUM_TIPS[circumAngle.mode];
+  document.getElementById('circum-theorem').innerHTML = CIRCUM_THEOREMS[circumAngle.mode];
+  document.getElementById('circum-info').innerHTML = infoHTML;
+}
+
+// 辅助函数：判断角度 p 是否在 a 到 b 的短弧内
+function isAngleInShortArc(p, a, b) {
+    let ab = (b - a + 2*Math.PI) % (2*Math.PI);
+    let ap = (p - a + 2*Math.PI) % (2*Math.PI);
+    if (ab < Math.PI) {
+        return ap < ab;
+    } else {
+        let ba = (a - b + 2*Math.PI) % (2*Math.PI);
+        let bp = (p - b + 2*Math.PI) % (2*Math.PI);
+        return bp < ba;
+    }
+}
+
+// 交互事件
+cvCircumAngle.addEventListener('pointerdown', e => {
+  const rect = cvCircumAngle.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvCircumAngle);
+  const R = 3;
+
+  const spA = view.toScreen(R * Math.cos(circumAngle.aAng), R * Math.sin(circumAngle.aAng));
+  const spB = view.toScreen(R * Math.cos(circumAngle.bAng), R * Math.sin(circumAngle.bAng));
+  const spP = view.toScreen(R * Math.cos(circumAngle.pAng), R * Math.sin(circumAngle.pAng));
+  const spP1 = view.toScreen(R * Math.cos(circumAngle.p1Ang), R * Math.sin(circumAngle.p1Ang));
+  const spP2 = view.toScreen(R * Math.cos(circumAngle.p2Ang), R * Math.sin(circumAngle.p2Ang));
+
+  circumAngle.dragTarget = null;
+
+  if (circumAngle.mode === 'center') {
+    if (Math.hypot(sx - spA.x, sy - spA.y) < 24) circumAngle.dragTarget = 'A';
+    else if (Math.hypot(sx - spB.x, sy - spB.y) < 24) circumAngle.dragTarget = 'B';
+    else if (Math.hypot(sx - spP.x, sy - spP.y) < 24) circumAngle.dragTarget = 'P';
+  } else if (circumAngle.mode === 'diameter') {
+    if (Math.hypot(sx - spA.x, sy - spA.y) < 24) circumAngle.dragTarget = 'A';
+    else if (Math.hypot(sx - spB.x, sy - spB.y) < 24) circumAngle.dragTarget = 'B';
+    else if (Math.hypot(sx - spP.x, sy - spP.y) < 24) circumAngle.dragTarget = 'P';
+  } else if (circumAngle.mode === 'same') {
+    if (Math.hypot(sx - spA.x, sy - spA.y) < 24) circumAngle.dragTarget = 'A';
+    else if (Math.hypot(sx - spB.x, sy - spB.y) < 24) circumAngle.dragTarget = 'B';
+    else if (Math.hypot(sx - spP1.x, sy - spP1.y) < 24) circumAngle.dragTarget = 'P1';
+    else if (Math.hypot(sx - spP2.x, sy - spP2.y) < 24) circumAngle.dragTarget = 'P2';
+  }
+
+  if (circumAngle.dragTarget) {
+    cvCircumAngle.setPointerCapture(e.pointerId);
+    cvCircumAngle.style.cursor = 'grabbing';
+  }
+});
+
+cvCircumAngle.addEventListener('pointermove', e => {
+  if (!circumAngle.dragTarget) return;
+  const rect = cvCircumAngle.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvCircumAngle);
+  const w = view.toWorld(sx, sy);
+  
+  let newAng = Math.atan2(w.y, w.x);
+
+  if (circumAngle.mode === 'center') {
+    if (circumAngle.dragTarget === 'A') {
+      // 限制 A 不能跨越劣弧吞没 P
+      if (!isAngleInShortArc(circumAngle.pAng, newAng, circumAngle.bAng)) circumAngle.aAng = newAng;
+    } else if (circumAngle.dragTarget === 'B') {
+      if (!isAngleInShortArc(circumAngle.pAng, circumAngle.aAng, newAng)) circumAngle.bAng = newAng;
+    } else if (circumAngle.dragTarget === 'P') {
+      if (!isAngleInShortArc(newAng, circumAngle.aAng, circumAngle.bAng)) circumAngle.pAng = newAng;
+    }
+  } 
+  else if (circumAngle.mode === 'diameter') {
+    if (circumAngle.dragTarget === 'A' || circumAngle.dragTarget === 'B') {
+      // 拖拽任意端点时，整根直径一起旋转
+      circumAngle.aAng = newAng;
+      circumAngle.bAng = newAng + Math.PI;
+    } else if (circumAngle.dragTarget === 'P') {
+      circumAngle.pAng = newAng;
+    }
+  } 
+  else if (circumAngle.mode === 'same') {
+    if (circumAngle.dragTarget === 'A') {
+      if (!isAngleInShortArc(circumAngle.p1Ang, newAng, circumAngle.bAng) &&
+          !isAngleInShortArc(circumAngle.p2Ang, newAng, circumAngle.bAng)) circumAngle.aAng = newAng;
+    } else if (circumAngle.dragTarget === 'B') {
+      if (!isAngleInShortArc(circumAngle.p1Ang, circumAngle.aAng, newAng) &&
+          !isAngleInShortArc(circumAngle.p2Ang, circumAngle.aAng, newAng)) circumAngle.bAng = newAng;
+    } else if (circumAngle.dragTarget === 'P1') {
+      if (!isAngleInShortArc(newAng, circumAngle.aAng, circumAngle.bAng)) circumAngle.p1Ang = newAng;
+    } else if (circumAngle.dragTarget === 'P2') {
+      if (!isAngleInShortArc(newAng, circumAngle.aAng, circumAngle.bAng)) circumAngle.p2Ang = newAng;
+    }
+  }
+
+  drawCircumAngleScene();
+});
+
+function circumPointerUp(e) {
+  if (circumAngle.dragTarget) {
+    circumAngle.dragTarget = null;
+    cvCircumAngle.style.cursor = 'default';
+    drawCircumAngleScene();
+  }
+  if (cvCircumAngle.hasPointerCapture(e.pointerId)) cvCircumAngle.releasePointerCapture(e.pointerId);
+}
+cvCircumAngle.addEventListener('pointerup', circumPointerUp);
+cvCircumAngle.addEventListener('pointercancel', circumPointerUp);
+
+/* =========================================================
+   圆内接四边形
+   ========================================================= */
+const cq = {
+  // 初始角度（逆时针分布）
+  angles: [Math.PI * 0.15, Math.PI * 0.65, Math.PI * 1.3, Math.PI * 1.85],
+  dragIndex: -1
+};
+
+const cvCyclicQuad = document.getElementById('cv-cyclic-quad');
+
+function drawCyclicQuadScene() {
+  const view = circleView(cvCyclicQuad);
+  const { ctx, W, H } = prepareCanvas(cvCyclicQuad);
+  if (W <= 0 || H <= 0) return;
+  const { toScreen, scale } = view;
+
+  drawCircleGrid(ctx, W, H, view);
+
+  const R = 3;
+  const O = toScreen(0, 0);
+  const pr = R * scale;
+
+  // 参考圆
+  ctx.beginPath();
+  ctx.arc(O.x, O.y, pr, 0, Math.PI * 2);
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 计算四个顶点屏幕坐标
+  const pts = cq.angles.map(ang => {
+    return toScreen(R * Math.cos(ang), R * Math.sin(ang));
+  });
+
+  // 画四边形
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(37,99,235,0.08)';
+  ctx.fill();
+  ctx.strokeStyle = '#2563eb';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // 计算并绘制四个内角
+  const angleDegs = [];
+  const angleNames = ['A', 'B', 'C', 'D'];
+  const colors = ['#ef4444', '#8b5cf6', '#ef4444', '#8b5cf6'];
+
+  for (let i = 0; i < 4; i++) {
+    const P = pts[i];
+    const P_prev = pts[(i - 1 + 4) % 4];
+    const P_next = pts[(i + 1) % 4];
+
+    const a1 = Math.atan2(P_prev.y - P.y, P_prev.x - P.x);
+    const a2 = Math.atan2(P_next.y - P.y, P_next.x - P.x);
+
+    let diff = a2 - a1;
+    if (diff > Math.PI) diff -= 2 * Math.PI;
+    if (diff < -Math.PI) diff += 2 * Math.PI;
+
+    // 记录角度
+    angleDegs.push(Math.abs(diff) * 180 / Math.PI);
+
+    // 画角弧
+    const arcR = 24;
+    ctx.beginPath();
+    ctx.arc(P.x, P.y, arcR, a1, a1 + diff, diff < 0);
+    ctx.strokeStyle = colors[i];
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 标注文字 (沿着角平分线向外偏一点)
+    const bisectAngle = a1 + diff / 2;
+    const tx = P.x + Math.cos(bisectAngle) * (arcR + 22);
+    const ty = P.y + Math.sin(bisectAngle) * (arcR + 22);
+    drawLabel(ctx, `${angleDegs[i].toFixed(1)}°`, tx, ty, colors[i], 0, 0, W, H, 'center');
+
+    // 顶点标记
+    ctx.beginPath();
+    ctx.arc(P.x, P.y, i === cq.dragIndex ? 8 : 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#2563eb';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawLabel(ctx, angleNames[i], P.x, P.y, '#1d4ed8', 0, -18, W, H, 'center');
+  }
+
+  // 更新面板数据
+  document.getElementById('cq-val-a').textContent = angleDegs[0].toFixed(1) + '°';
+  document.getElementById('cq-val-b').textContent = angleDegs[1].toFixed(1) + '°';
+  document.getElementById('cq-val-c').textContent = angleDegs[2].toFixed(1) + '°';
+  document.getElementById('cq-val-d').textContent = angleDegs[3].toFixed(1) + '°';
+}
+
+// 交互逻辑
+cvCyclicQuad.addEventListener('pointerdown', e => {
+  const rect = cvCyclicQuad.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvCyclicQuad);
+  const R = 3;
+
+  let bestDist = 24;
+  cq.dragIndex = -1;
+
+  for (let i = 0; i < 4; i++) {
+    const p = view.toScreen(R * Math.cos(cq.angles[i]), R * Math.sin(cq.angles[i]));
+    const d = Math.hypot(sx - p.x, sy - p.y);
+    if (d < bestDist) {
+      bestDist = d;
+      cq.dragIndex = i;
+    }
+  }
+
+  if (cq.dragIndex !== -1) {
+    cvCyclicQuad.setPointerCapture(e.pointerId);
+    cvCyclicQuad.style.cursor = 'grabbing';
+  }
+});
+
+cvCyclicQuad.addEventListener('pointermove', e => {
+  if (cq.dragIndex === -1) return;
+  const rect = cvCyclicQuad.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const view = circleView(cvCyclicQuad);
+  const w = view.toWorld(sx, sy);
+
+  let newAng = Math.atan2(w.y, w.x);
+  if (newAng < 0) newAng += 2 * Math.PI;
+
+  // 防止四边形自交的边界判定
+  const prevIdx = (cq.dragIndex - 1 + 4) % 4;
+  const nextIdx = (cq.dragIndex + 1) % 4;
+  const prevAng = cq.angles[prevIdx];
+  const nextAng = cq.angles[nextIdx];
+
+  // 计算从 prevAng 到 nextAng 之间的正向夹角
+  let diffNext = (nextAng - prevAng + 2 * Math.PI) % (2 * Math.PI);
+  // 计算从 prevAng 到 newAng 的正向夹角
+  let diffNew = (newAng - prevAng + 2 * Math.PI) % (2 * Math.PI);
+
+  // 如果新角度在两个相邻点之间，才允许更新
+  if (diffNew > 0 && diffNew < diffNext) {
+    cq.angles[cq.dragIndex] = newAng;
+  }
+
+  drawCyclicQuadScene();
+});
+
+function cqPointerUp(e) {
+  if (cq.dragIndex !== -1) {
+    cq.dragIndex = -1;
+    cvCyclicQuad.style.cursor = 'default';
+    drawCyclicQuadScene();
+  }
+  if (cvCyclicQuad.hasPointerCapture(e.pointerId)) cvCyclicQuad.releasePointerCapture(e.pointerId);
+}
+cvCyclicQuad.addEventListener('pointerup', cqPointerUp);
+cvCyclicQuad.addEventListener('pointercancel', cqPointerUp);
+
+/* =========================================================
+   正多边形与圆
+   ========================================================= */
+const rp = {
+  n: 5,
+  rot: 0,
+  isAnimating: false,
+  animStartTime: 0,
+  animStartRot: 0,
+  animTargetRot: 0,
+  showAxes: false,
+  R: 3
+};
+
+const cvRegularPoly = document.getElementById('cv-regular-poly');
+const rpSlider = document.getElementById('rp-slider');
+
+rpSlider.addEventListener('input', e => {
+  rp.n = parseInt(e.target.value);
+  document.getElementById('rp-n-val').textContent = rp.n;
+  rp.rot = 0; // 改变边数时复位
+  rp.isAnimating = false;
+  drawRegularPolyScene();
+});
+
+document.getElementById('rp-axes-check').addEventListener('change', e => {
+  rp.showAxes = e.target.checked;
+  drawRegularPolyScene();
+});
+
+document.getElementById('rp-rotate-btn').addEventListener('click', () => {
+  if (!rp.isAnimating) {
+    rp.isAnimating = true;
+    rp.animStartTime = performance.now();
+    rp.animStartRot = rp.rot;
+    // 每次累加一个中心角
+    rp.animTargetRot = rp.rot + (2 * Math.PI) / rp.n;
+    requestAnimationFrame(rpAnimLoop);
+  }
+});
+
+function rpAnimLoop(now) {
+  if (!rp.isAnimating) return;
+  const duration = 1000; 
+  let t = (now - rp.animStartTime) / duration;
+  if (t >= 1) t = 1;
+  
+  const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  
+  rp.rot = rp.animStartRot + (rp.animTargetRot - rp.animStartRot) * ease;
+  drawRegularPolyScene();
+  
+  if (t < 1) {
+    requestAnimationFrame(rpAnimLoop);
+  } else {
+    rp.isAnimating = false;
+    rp.rot = rp.animTargetRot; // 停留在目标位置
+    // 防溢出处理
+    if (rp.rot > Math.PI * 2) rp.rot %= Math.PI * 2;
+    drawRegularPolyScene();
+  }
+}
+
+// 获取精确的边长表达式 (R=3)
+// 生成 HTML 分式
+function htmlFrac(num, den) {
+  if (num % den === 0) return (num / den).toString();
+  const g = gcd(num, den);
+  num /= g; den /= g;
+  return `<span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span>`;
+}
+
+// 获取精确的边长表达式 (R=3)
+function getExactSideLength(n) {
+  // 常见特殊角的精确根式
+  if (n === 3) return `3<span class="sqrt"><svg class="sqrt-svg" viewBox="0 0 10 14" preserveAspectRatio="none"><path d="M 1 8 L 4 14 L 10 1" fill="none" stroke="currentColor" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg><span class="radicand">3</span></span>`;
+  if (n === 4) return `3<span class="sqrt"><svg class="sqrt-svg" viewBox="0 0 10 14" preserveAspectRatio="none"><path d="M 1 8 L 4 14 L 10 1" fill="none" stroke="currentColor" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg><span class="radicand">2</span></span>`;
+  if (n === 6) return `3`;
+  if (n === 12) return `<span class="frac"><span class="num">3</span><span class="den">2</span></span>(<span class="sqrt"><svg class="sqrt-svg" viewBox="0 0 10 14" preserveAspectRatio="none"><path d="M 1 8 L 4 14 L 10 1" fill="none" stroke="currentColor" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg><span class="radicand">6</span></span> - <span class="sqrt"><svg class="sqrt-svg" viewBox="0 0 10 14" preserveAspectRatio="none"><path d="M 1 8 L 4 14 L 10 1" fill="none" stroke="currentColor" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg><span class="radicand">2</span></span>)`;
+  
+  // 其他边数，直接使用三角函数表达式：a = 2R * sin(π/n) = 6 * sin(180°/n)
+  return `6sin(${htmlFrac(180, n)}°)`;
+}
+
+function drawRegularPolyScene() {
+  const view = circleView(cvRegularPoly);
+  const { ctx, W, H } = prepareCanvas(cvRegularPoly);
+  if (W <= 0 || H <= 0) return;
+  const { toScreen, scale } = view;
+
+  drawCircleGrid(ctx, W, H, view);
+
+  const R = rp.R;
+  const O = toScreen(0, 0);
+  const pr = R * scale;
+
+  // 参考圆
+  ctx.beginPath();
+  ctx.arc(O.x, O.y, pr, 0, Math.PI * 2);
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 计算所有顶点
+  const pts = [];
+  for (let i = 0; i < rp.n; i++) {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / rp.n + rp.rot;
+    pts.push({
+      x: R * Math.cos(angle),
+      y: R * Math.sin(angle)
+    });
+  }
+  const spPts = pts.map(p => toScreen(p.x, p.y));
+
+  // 绘制多边形
+  ctx.beginPath();
+  ctx.moveTo(spPts[0].x, spPts[0].y);
+  for (let i = 1; i < rp.n; i++) ctx.lineTo(spPts[i].x, spPts[i].y);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(37,99,235,0.06)';
+  ctx.fill();
+  ctx.strokeStyle = '#2563eb';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // 对称轴 (延伸至 1.5 倍半径)
+  if (rp.showAxes) {
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = 'rgba(168,85,247,0.4)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < rp.n; i++) {
+      const angle = -Math.PI / 2 + (Math.PI * i) / rp.n - rp.rot;
+      const x1 = O.x + Math.cos(angle) * pr * 1.5;
+      const y1 = O.y + Math.sin(angle) * pr * 1.5;
+      const x2 = O.x - Math.cos(angle) * pr * 1.5;
+      const y2 = O.y - Math.sin(angle) * pr * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 高亮一条边、两条半径和中心角
+  if (rp.n >= 3) {
+    const sp0 = spPts[0];
+    const sp1 = spPts[1];
+    
+    // 半径
+    ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(sp0.x, sp0.y);
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(sp1.x, sp1.y);
+    ctx.stroke();
+    
+    // 高亮边
+    ctx.beginPath(); ctx.moveTo(sp0.x, sp0.y); ctx.lineTo(sp1.x, sp1.y);
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; ctx.stroke();
+
+    // 中心角圆弧
+    const arcR = 28;
+    const startAng = Math.PI / 2 - (2 * Math.PI) / rp.n - rp.rot;
+    const endAng = startAng + (2 * Math.PI) / rp.n;
+    ctx.beginPath(); ctx.arc(O.x, O.y, arcR, startAng, endAng, false);
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.stroke();
+    
+    // 文本标注
+    drawLabel(ctx, 'R', (O.x + sp0.x)/2, (O.y + sp0.y)/2, '#f59e0b', 15, 0, W, H, 'center');
+    drawLabel(ctx, 'R', (O.x + sp1.x)/2, (O.y + sp1.y)/2, '#f59e0b', -5, -15, W, H, 'center');
+    drawLabel(ctx, 'a', (sp0.x + sp1.x)/2, (sp0.y + sp1.y)/2, '#ef4444', 10, 15, W, H, 'center');
+    
+    // 中心角标注
+    const midAng = startAng + Math.PI / rp.n;
+    const tx = O.x + Math.cos(midAng) * (arcR + 15);
+    const ty = O.y + Math.sin(midAng) * (arcR + 15);
+    drawLabel(ctx, `${(360/rp.n).toFixed(1)}°`, tx, ty, '#f59e0b', 0, 0, W, H, 'center');
+  }
+
+  // 画顶点和圆心
+  spPts.forEach(p => {
+    dot(ctx, p.x, p.y, '#2563eb', 5);
+  });
+  dot(ctx, O.x, O.y, '#94a3b8', 4.5);
+  drawLabel(ctx, 'O', O.x, O.y, '#64748b', -12, -12, W, H, 'right');
+
+  // 更新面板数据
+  const centerAngleStr = htmlFrac(360, rp.n) + '°';
+  const innerAngleStr = htmlFrac(180 * (rp.n - 2), rp.n) + '°';
+  const outerAngleStr = htmlFrac(360, rp.n) + '°';
+
+  document.getElementById('rp-angle-center').innerHTML = centerAngleStr;
+  document.getElementById('rp-angle-inner').innerHTML = innerAngleStr;
+  document.getElementById('rp-angle-outer').innerHTML = outerAngleStr;
+  document.getElementById('rp-side-length').innerHTML = getExactSideLength(rp.n);
+}
+
+/* =========================================================
+   弧长与扇形面积
+   ========================================================= */
+const sa = {
+  n: 4,
+  t: 0,
+  isAnimating: false,
+  R: 3,
+  theta: Math.PI
+};
+
+const cvSectorArea = document.getElementById('cv-sector-area');
+
+// 生成 HTML 格式的带 π 分数
+function getPiHtml(deg, R, isArea) {
+  let num, den;
+  if (!isArea) {
+    num = deg * R;
+    den = 180;
+  } else {
+    num = deg * R * R;
+    den = 360;
+  }
+  if (num === 0) return '0';
+  const g = gcd(Math.round(num), den);
+  num /= g;
+  den /= g;
+  if (den === 1) return `${num}π`;
+  if (num === 1) return `<span class="frac"><span class="num">π</span><span class="den">${den}</span></span>`;
+  return `<span class="frac"><span class="num">${num}π</span><span class="den">${den}</span></span>`;
+}
+
+// 生成 Canvas 格式的带 π 文本
+function getPiText(deg, R, isArea) {
+  let num, den;
+  if (!isArea) {
+    num = deg * R;
+    den = 180;
+  } else {
+    num = deg * R * R;
+    den = 360;
+  }
+  if (num === 0) return '0';
+  const g = gcd(Math.round(num), den);
+  num /= g;
+  den /= g;
+  if (den === 1) return `${num}π`;
+  if (num === 1) return `π/${den}`;
+  return `${num}π/${den}`;
+}
+
+function updateSaInfo() {
+  const deg = Math.round(sa.theta * 180 / Math.PI);
+  document.getElementById('sa-val-l').innerHTML = getPiHtml(deg, sa.R, false);
+  document.getElementById('sa-val-area').innerHTML = getPiHtml(deg, sa.R, true);
+  document.getElementById('sa-theta-val').textContent = `${deg}°`;
+}
+
+document.getElementById('sa-theta-slider').addEventListener('input', e => {
+  if (sa.isAnimating) return;
+  const deg = parseInt(e.target.value);
+  sa.theta = deg * Math.PI / 180;
+  updateSaInfo();
+  drawSectorAreaScene();
+});
+
+document.querySelectorAll('#screen-sector-area .subtab').forEach(t => {
+  t.addEventListener('click', () => {
+    if (sa.isAnimating) return;
+    sa.n = parseInt(t.dataset.n);
+    document.querySelectorAll('#screen-sector-area .subtab').forEach(x => x.classList.toggle('active', x === t));
+    drawSectorAreaScene();
+  });
+});
+
+document.getElementById('sa-animate-btn').addEventListener('click', () => {
+  if (sa.isAnimating) {
+    sa.isAnimating = false;
+    sa.t = 0;
+    document.getElementById('sa-animate-btn').textContent = '▶ 开始拼接演示';
+    document.getElementById('sa-theta-slider').disabled = false;
+    drawSectorAreaScene();
+    return;
+  }
+  
+  if (sa.t > 0.99) {
+    sa.t = 0;
+    document.getElementById('sa-animate-btn').textContent = '▶ 开始拼接演示';
+    document.getElementById('sa-theta-slider').disabled = false;
+    drawSectorAreaScene();
+    return;
+  }
+  
+  sa.isAnimating = true;
+  document.getElementById('sa-animate-btn').textContent = '取消演示';
+  document.getElementById('sa-theta-slider').disabled = true;
+  sa.startTime = performance.now();
+  
+  function anim(now) {
+    if (!sa.isAnimating) return;
+    let p = (now - sa.startTime) / 2000;
+    if (p >= 1) p = 1;
+    sa.t = p;
+    drawSectorAreaScene();
+    
+    if (p < 1) {
+      requestAnimationFrame(anim);
+    } else {
+      sa.isAnimating = false;
+      document.getElementById('sa-animate-btn').textContent = '还原为普通扇形';
+    }
+  }
+  requestAnimationFrame(anim);
+});
+
+function drawSectorAreaScene() {
+  const view = circleView(cvSectorArea);
+  const { ctx, W, H } = prepareCanvas(cvSectorArea);
+  if (W <= 0 || H <= 0) return;
+
+  drawCircleGrid(ctx, W, H, view);
+
+  const R = sa.R;
+  const n = sa.n;
+  const theta = sa.theta;
+  const deg = Math.round(theta * 180 / Math.PI);
+  const delta = theta / n;
+
+  const max_box_w = Math.PI * R;
+  const max_box_h = 2 * R;
+  let scale = Math.min((W * 0.85) / max_box_w, (H * 0.85) / max_box_h);
+  
+  const pr = R * scale; 
+  
+  const O_x = W / 2;
+  const O_y = H / 2;
+  
+  const s = 2 * R * Math.sin(delta / 2) * scale;
+  const W_box = (n * s) / 2;
+
+  const boxLeftX = O_x - W_box / 2;
+  const boxTopY = O_y - pr / 2;
+
+  if (sa.t === 0) {
+    ctx.beginPath();
+    ctx.moveTo(O_x, O_y);
+    ctx.arc(O_x, O_y, pr, -Math.PI/2 - theta/2, -Math.PI/2 + theta/2);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(37,99,235,0.15)';
+    ctx.fill();
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    const r1Angle = -Math.PI/2 - theta/4;
+    const r2Angle = -Math.PI/2 + theta/4;
+    const r1X = O_x + Math.cos(r1Angle) * pr / 2;
+    const r1Y = O_y + Math.sin(r1Angle) * pr / 2;
+    const r2X = O_x + Math.cos(r2Angle) * pr / 2;
+    const r2Y = O_y + Math.sin(r2Angle) * pr / 2;
+    
+    drawLabel(ctx, `R = ${R}`, r1X, r1Y, '#f59e0b', -20, -10, W, H, 'center');
+    drawLabel(ctx, `R = ${R}`, r2X, r2Y, '#f59e0b', 20, -10, W, H, 'center');
+
+    ctx.beginPath();
+    ctx.arc(O_x, O_y, pr, -Math.PI/2 - theta/2, -Math.PI/2 + theta/2);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    
+    const arcMidX = O_x;
+    const arcMidY = O_y - pr - 20;
+    drawLabel(ctx, `弧长 l = ${getPiText(deg, R, false)}`, arcMidX, arcMidY, '#ef4444', 0, 0, W, H, 'center');
+
+    if (theta > 0.2) {
+      ctx.beginPath();
+      ctx.arc(O_x, O_y, 24, -Math.PI/2 - theta/2, -Math.PI/2 + theta/2);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      drawLabel(ctx, `${deg}°`, O_x, O_y - 35, '#f59e0b', 0, 0, W, H, 'center');
+    }
+    
+    drawLabel(ctx, `面积 S = ½ l R`, O_x, O_y - pr*0.5, '#2563eb', 0, 0, W, H, 'center');
+    dot(ctx, O_x, O_y, '#94a3b8', 4.5);
+    return;
+  }
+
+  let moveT = sa.t < 0.1 ? 0 : (sa.t - 0.1) / 0.75;
+  if (moveT > 1) moveT = 1;
+  const easeMove = moveT * moveT * (3 - 2 * moveT);
+
+  for (let i = 0; i < n; i++) {
+    const midA = -Math.PI/2 - theta/2 + (i + 0.5) * delta;
+    const isEven = (i % 2 === 0);
+    
+    const targetX = boxLeftX + (i + 0.5) * (s / 2);
+    const targetY = isEven ? (O_y - pr / 2) : (O_y + pr / 2);
+    const targetAngle = isEven ? Math.PI / 2 : -Math.PI / 2;
+    
+    let dA = targetAngle - midA;
+    while (dA > Math.PI) dA -= 2 * Math.PI;
+    while (dA < -Math.PI) dA += 2 * Math.PI;
+    
+    const curX = O_x * (1 - easeMove) + targetX * easeMove;
+    const curY = O_y * (1 - easeMove) + targetY * easeMove;
+    const curAngle = midA + dA * easeMove;
+    
+    ctx.save();
+    ctx.translate(curX, curY);
+    ctx.rotate(curAngle);
+    
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, pr, -delta/2, delta/2);
+    ctx.closePath();
+    
+    ctx.fillStyle = isEven ? 'rgba(37,99,235,0.7)' : 'rgba(56,189,248,0.7)';
+    ctx.fill();
+    
+    if (sa.t > 0) {
+      ctx.strokeStyle = `rgba(255, 255, 255, ${Math.min(1, sa.t * 10)})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if (sa.t > 0.85) {
+    const alpha = (sa.t - 0.85) / 0.15;
+    ctx.save();
+    ctx.setLineDash([6, 6]);
+    ctx.strokeStyle = `rgba(239,68,68,${alpha})`;
+    ctx.lineWidth = 2;
+    
+    ctx.strokeRect(boxLeftX, boxTopY, W_box, pr);
+    
+    ctx.font = '600 14px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillStyle = `rgba(239,68,68,${alpha})`;
+    ctx.textAlign = 'center';
+    
+    ctx.fillText(`底 ≈ ½ l`, O_x, boxTopY + pr + 24);
+    
+    ctx.save();
+    ctx.translate(boxLeftX - 24, O_y);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(`高 = R`, 0, 0);
+    ctx.restore();
+    
+    ctx.font = '600 16px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillStyle = `rgba(29,78,216,${alpha})`;
+    ctx.fillText(`S = 底 × 高 = ½ l × R`, O_x, boxTopY - 20);
+    
+    ctx.beginPath();
+    ctx.arc(O_x, O_y, pr, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(226,232,240,${alpha})`;
+    ctx.stroke();
+    ctx.restore();
+  }
+  
+  updateSaInfo();
+}
+
+setTimeout(() => {
+  updateSaInfo();
+}, 100);
+</script>
+</body>
+</html>
